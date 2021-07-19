@@ -1,0 +1,90 @@
+== SOFTWARE RECOVERY/ARCHEOLOGY OF MAVEN CENTRAL ==
+
+== PREFACE ==
+
+Maven is used by Gradle, which is used by Android developers to build apps and other software.
+
+Maven Central is the main software repository for Maven.
+
+Work has been done to get the Maven build system to be bootstrappable.
+
+This is an attempt to build, using a top-down approach, some software, from source from Maven Central in order to assess reproducibility.
+
+== METHODOLOGY ==
+
+WARNING:
+
+Make sure the scripts are in their own, same directory before running.
+
+Also;
+
+cd to the directory before running.
+
+=ABOUT sourceGetter3.sh=
+
+This script attempts to recursively download sources from maven central.
+
+It does this by:
+
+Downloading the pom file
+Reading the scm field for the pom
+If there is a repository to download sources from, gets sources
+If not, downloads *-sources.jar for the package and extracts
+If *-sources.jar does not exist, downloads *.jar (a binary)
+
+It also copies the pom into the sources as pom.xml if a pom.xml file does not exist within the sources.
+
+If a scm repository is listed more than once, it only downloads it once.
+It does this by making a symlink to the downloaded scm repository.
+
+The downloaded scm repositories are placed in sources folder
+Along with a folder called structure.
+
+In structure, is a load of folders, which are usually the groupIds for the package
+Within one of these folders is the artifactId folder
+
+In the artifactId folder might be a maven-metadata.xml, which was used to get the latest version, if the version field wasn't specified.
+
+Within one of these folders is the version folder
+
+Within one of these folders is either a symlink called extractedSources, to the downloaded scm repository, or a folder with the extracted sources.jar and potentially
+ copied pom file, or nothing.
+
+Also in this folder might be a folder called "toDecompile". This is only present when all that could be downloaded was a binary jar. The decompilation or alternate
+source finding is left as an exercise to the user.
+
+Also in this folder might be a downloaded *.jar or *-sources.jar.
+
+Also in this folder is a *.pom for the version of the software
+
+buildOrder.txt is generated when downloading the sources, and is the dependency tree for the downloaded software.
+
+=ABOUT reconstruct3.sh=
+
+Run this script after getSources3.sh
+
+This script creates a directory tree with a bunch of .fileLists to build the .java files. It does this by searching for the class or interface name, and uses also the
+artifact id and group id.
+
+=ABOUT firstParse3.sh=
+
+Run this script after reconstruct3.sh
+
+This script attempts to build the .java files listed in .fileLists in no particular order. Output is placed in fileListsAndDeps folder under
+fileListsAndDeps/<groupId>/<artifactID>/<version>/<groupId>.<artifactId>.<version>.<classOrInterfaceName>/*
+
+Symlinks are created in ${PWD}/classpath to the files and directories in <classOrInterfaceName>
+
+This allows for the build to repeat.
+
+The build automatically repeats until nothing more can be built.
+
+You can tell if a class or interface has successfully built by looking in the buildlog directory.
+
+=ABOUT createJARS3.sh=
+
+Run this script after firstParse3.sh
+
+This script packages up the class files, for the packages into their own jar, for each package.
+
+Licencing should be less of an issue to ascertain as the classes are not reconstructed from the classpath.

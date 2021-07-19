@@ -1,0 +1,16 @@
+9,11c9,11
+<     private static String printIt(){
+< 	return "Hello, World";
+<     }
+---
+>     private static String printIt(){
+> 	return "Hello, World";
+>     }
+13,15c13,15
+<     private static String woop(){
+< 	return "Hello, World";
+<     }
+---
+>     private static String woop(){
+> 	return "Hello, World";
+>     }

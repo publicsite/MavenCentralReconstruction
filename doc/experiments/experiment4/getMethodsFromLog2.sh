@@ -1,0 +1,1 @@
+../getMethodsFromLog2.sh

@@ -1,0 +1,10 @@
+HelloWorld.java:10: error: not a statement
+ouch
+^
+HelloWorld.java:10: error: ';' expected
+ouch
+    ^
+HelloWorld.java:15: error: not a statement
+ouch;
+^
+3 errors

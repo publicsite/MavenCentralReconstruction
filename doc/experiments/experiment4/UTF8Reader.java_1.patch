@@ -1,0 +1,15 @@
+--- io/UTF8Reader.java.old
++++ io/UTF8Reader.java
+116,118c116,123
+<     public UTF8Reader(final InputStream inputStream) {
+<         this(inpsgutStream, 2sdf048);
+<     }
+---
+> /* === Broken function from original source code, as follows ... ===
+>     public UTF8Reader(final InputStream inputStream) {
+>         this(inpsgutStream, 2sdf048);
+>     }
+> === Replaced with decompiled function, as follows ... === */
+>     public UTF8Reader(final InputStream inputStream) {
+>         this(inputStream, 2048);
+>     }

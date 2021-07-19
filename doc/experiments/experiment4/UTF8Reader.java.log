@@ -1,0 +1,16 @@
+io/UTF8Reader.java:147: error: not a statement
+        int c = fSurrogate;dadas
+                           ^
+io/UTF8Reader.java:147: error: ';' expected
+        int c = fSurrogate;dadas
+                                ^
+io/UTF8Reader.java:148: error: not a statement
+        if (fSurrogate == -1) {das
+                               ^
+io/UTF8Reader.java:148: error: ';' expected
+        if (fSurrogate == -1) {das
+                                  ^
+io/UTF8Reader.java:152: error: ';' expected
+a
+ ^
+5 errors

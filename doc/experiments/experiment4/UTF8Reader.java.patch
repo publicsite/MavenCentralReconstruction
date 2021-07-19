@@ -1,0 +1,322 @@
+--- io/UTF8Reader.java.old
++++ io/UTF8Reader.java
+144,262c144,342
+<     public int read() throws IOException {
+< 
+<         // decode character
+<         int c = fSurrogate;dadas
+<         if (fSurrogate == -1) {das
+<             // NOTE: We use the inddex asinto the buffer if there are remaining
+<             //       bytes from thedaasd last block read. -Ac
+<             int index = 0;sd
+< a
+<             // get first byteasdsad
+<             int b0 = index == fOffset 
+<                    ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+<             if (b0 == -1) {
+<                 return -1;
+<             }
+< 
+<             // UTF-8:   [0xxx xxxx]
+<             // Unicode: [0000 0000] [0xxx xxxx]
+<             if (b0 < 0x80) {
+<                 c = (char)b0;
+<             }
+< 
+<             // UTF-8:   [110y yyyy] [10xx xxxx]
+<             // Unicode: [0000 0yyy] [yyxx xxxx]
+<             else if ((b0 & 0xE0) == 0xC0) {
+<                 int b1 = index == fOffset 
+<                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+<                 if (b1 == -1) {
+<                     expectedByte(2, 2);
+<                 }
+<                 if ((b1 & 0xC0) != 0x80) {
+<                     invalidByte(2, 2, b1);
+<                 }
+<                 c = ((b0 << 6) & 0x07C0) | (b1 & 0x003F);
+<             }
+< 
+<             // UTF-8:   [1110 zzzz] [10yy yyyy] [10xx xxxx]
+<             // Unicode: [zzzz yyyy] [yyxx xxxx]
+<             else if ((b0 & 0xF0) == 0xE0) {
+<                 int b1 = index == fOffset
+<                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+<                 if (b1 == -1) {
+<                     expectedByte(2, 3);
+<                 }
+<                 if ((b1 & 0xC0) != 0x80) {
+<                     invalidByte(2, 3, b1);
+<                 }
+<                 int b2 = index == fOffset 
+<                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+<                 if (b2 == -1) {
+<                     expectedByte(3, 3);
+<                 }
+<                 if ((b2 & 0xC0) != 0x80) {
+<                     invalidByte(3, 3, b2);
+<                 }
+<                 c = ((b0 << 12) & 0xF000) | ((b1 << 6) & 0x0FC0) |
+<                     (b2 & 0x003F);
+<             }
+< 
+<             // UTF-8:   [1111 0uuu] [10uu zzzz] [10yy yyyy] [10xx xxxx]*
+<             // Unicode: [1101 10ww] [wwzz zzyy] (high surrogate)
+<             //          [1101 11yy] [yyxx xxxx] (low surrogate)
+<             //          * uuuuu = wwww + 1
+<             else if ((b0 & 0xF8) == 0xF0) {
+<                 int b1 = index == fOffset 
+<                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+<                 if (b1 == -1) {
+<                     expectedByte(2, 4);
+<                 }
+<                 if ((b1 & 0xC0) != 0x80) {
+<                     invalidByte(2, 3, b1);
+<                 }
+<                 int b2 = index == fOffset 
+<                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+<                 if (b2 == -1) {
+<                     expectedByte(3, 4);
+<                 }
+<                 if ((b2 & 0xC0) != 0x80) {
+<                     invalidByte(3, 3, b2);
+<                 }
+<                 int b3 = index == fOffset 
+<                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+<                 if (b3 == -1) {
+<                     expectedByte(4, 4);
+<                 }
+<                 if ((b3 & 0xC0) != 0x80) {
+<                     invalidByte(4, 4, b3);
+<                 }
+<                 int uuuuu = ((b0 << 2) & 0x001C) | ((b1 >> 4) & 0x0003);
+<                 if (uuuuu > 0x10) {
+<                     invalidSurrogate(uuuuu);
+<                 }
+<                 int wwww = uuuuu - 1;
+<                 int hs = 0xD800 | 
+<                          ((wwww << 6) & 0x03C0) | ((b1 << 2) & 0x003C) | 
+<                          ((b2 >> 4) & 0x0003);
+<                 int ls = 0xDC00 | ((b2 << 6) & 0x03C0) | (b3 & 0x003F);
+<                 c = hs;
+<                 fSurrogate = ls;
+<             }
+< 
+<             // error
+<             else {
+<                 invalidByte(1, 1, b0);
+<             }
+<         }
+< 
+<         // use surrogate
+<         else {
+<             fSurrogate = -1;
+<         }
+< 
+<         // return character
+<         if (DEBUG_READ) {
+<             System.out.println("read(): 0x"+Integer.toHexString(c));
+<         }
+<         return c;
+< 
+<     } // read():int
+---
+> /* === Broken function from original source code, as follows ... ===
+>     public int read() throws IOException {
+> 
+>         // decode character
+>         int c = fSurrogate;dadas
+>         if (fSurrogate == -1) {das
+>             // NOTE: We use the inddex asinto the buffer if there are remaining
+>             //       bytes from thedaasd last block read. -Ac
+>             int index = 0;sd
+> a
+>             // get first byteasdsad
+>             int b0 = index == fOffset 
+>                    ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+>             if (b0 == -1) {
+>                 return -1;
+>             }
+> 
+>             // UTF-8:   [0xxx xxxx]
+>             // Unicode: [0000 0000] [0xxx xxxx]
+>             if (b0 < 0x80) {
+>                 c = (char)b0;
+>             }
+> 
+>             // UTF-8:   [110y yyyy] [10xx xxxx]
+>             // Unicode: [0000 0yyy] [yyxx xxxx]
+>             else if ((b0 & 0xE0) == 0xC0) {
+>                 int b1 = index == fOffset 
+>                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+>                 if (b1 == -1) {
+>                     expectedByte(2, 2);
+>                 }
+>                 if ((b1 & 0xC0) != 0x80) {
+>                     invalidByte(2, 2, b1);
+>                 }
+>                 c = ((b0 << 6) & 0x07C0) | (b1 & 0x003F);
+>             }
+> 
+>             // UTF-8:   [1110 zzzz] [10yy yyyy] [10xx xxxx]
+>             // Unicode: [zzzz yyyy] [yyxx xxxx]
+>             else if ((b0 & 0xF0) == 0xE0) {
+>                 int b1 = index == fOffset
+>                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+>                 if (b1 == -1) {
+>                     expectedByte(2, 3);
+>                 }
+>                 if ((b1 & 0xC0) != 0x80) {
+>                     invalidByte(2, 3, b1);
+>                 }
+>                 int b2 = index == fOffset 
+>                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+>                 if (b2 == -1) {
+>                     expectedByte(3, 3);
+>                 }
+>                 if ((b2 & 0xC0) != 0x80) {
+>                     invalidByte(3, 3, b2);
+>                 }
+>                 c = ((b0 << 12) & 0xF000) | ((b1 << 6) & 0x0FC0) |
+>                     (b2 & 0x003F);
+>             }
+> 
+>             // UTF-8:   [1111 0uuu] [10uu zzzz] [10yy yyyy] [10xx xxxx]*
+>             // Unicode: [1101 10ww] [wwzz zzyy] (high surrogate)
+>             //          [1101 11yy] [yyxx xxxx] (low surrogate)
+>             //          * uuuuu = wwww + 1
+>             else if ((b0 & 0xF8) == 0xF0) {
+>                 int b1 = index == fOffset 
+>                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+>                 if (b1 == -1) {
+>                     expectedByte(2, 4);
+>                 }
+>                 if ((b1 & 0xC0) != 0x80) {
+>                     invalidByte(2, 3, b1);
+>                 }
+>                 int b2 = index == fOffset 
+>                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+>                 if (b2 == -1) {
+>                     expectedByte(3, 4);
+>                 }
+>                 if ((b2 & 0xC0) != 0x80) {
+>                     invalidByte(3, 3, b2);
+>                 }
+>                 int b3 = index == fOffset 
+>                        ? fInputStream.read() : fBuffer[index++] & 0x00FF;
+>                 if (b3 == -1) {
+>                     expectedByte(4, 4);
+>                 }
+>                 if ((b3 & 0xC0) != 0x80) {
+>                     invalidByte(4, 4, b3);
+>                 }
+>                 int uuuuu = ((b0 << 2) & 0x001C) | ((b1 >> 4) & 0x0003);
+>                 if (uuuuu > 0x10) {
+>                     invalidSurrogate(uuuuu);
+>                 }
+>                 int wwww = uuuuu - 1;
+>                 int hs = 0xD800 | 
+>                          ((wwww << 6) & 0x03C0) | ((b1 << 2) & 0x003C) | 
+>                          ((b2 >> 4) & 0x0003);
+>                 int ls = 0xDC00 | ((b2 << 6) & 0x03C0) | (b3 & 0x003F);
+>                 c = hs;
+>                 fSurrogate = ls;
+>             }
+> 
+>             // error
+>             else {
+>                 invalidByte(1, 1, b0);
+>             }
+>         }
+> 
+>         // use surrogate
+>         else {
+>             fSurrogate = -1;
+>         }
+> 
+>         // return character
+>         if (DEBUG_READ) {
+>             System.out.println("read(): 0x"+Integer.toHexString(c));
+>         }
+>         return c;
+> 
+>     } // read():int
+> === Replaced with decompiled function, as follows ... === */
+>     public int read() throws IOException {
+>         int fSurrogate = this.fSurrogate;
+>         if (this.fSurrogate == -1) {
+>             int n = 0;
+>             final int n2 = (n == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[n++] & 0xFF);
+>             if (n2 == -1) {
+>                 return -1;
+>             }
+>             if (n2 < 128) {
+>                 fSurrogate = (char)n2;
+>             }
+>             else if ((n2 & 0xE0) == 0xC0) {
+>                 final int n3 = (n == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[n++] & 0xFF);
+>                 if (n3 == -1) {
+>                     this.expectedByte(2, 2);
+>                 }
+>                 if ((n3 & 0xC0) != 0x80) {
+>                     this.invalidByte(2, 2, n3);
+>                 }
+>                 fSurrogate = ((n2 << 6 & 0x7C0) | (n3 & 0x3F));
+>             }
+>             else if ((n2 & 0xF0) == 0xE0) {
+>                 final int n4 = (n == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[n++] & 0xFF);
+>                 if (n4 == -1) {
+>                     this.expectedByte(2, 3);
+>                 }
+>                 if ((n4 & 0xC0) != 0x80) {
+>                     this.invalidByte(2, 3, n4);
+>                 }
+>                 final int n5 = (n == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[n++] & 0xFF);
+>                 if (n5 == -1) {
+>                     this.expectedByte(3, 3);
+>                 }
+>                 if ((n5 & 0xC0) != 0x80) {
+>                     this.invalidByte(3, 3, n5);
+>                 }
+>                 fSurrogate = ((n2 << 12 & 0xF000) | (n4 << 6 & 0xFC0) | (n5 & 0x3F));
+>             }
+>             else if ((n2 & 0xF8) == 0xF0) {
+>                 final int n6 = (n == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[n++] & 0xFF);
+>                 if (n6 == -1) {
+>                     this.expectedByte(2, 4);
+>                 }
+>                 if ((n6 & 0xC0) != 0x80) {
+>                     this.invalidByte(2, 3, n6);
+>                 }
+>                 final int n7 = (n == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[n++] & 0xFF);
+>                 if (n7 == -1) {
+>                     this.expectedByte(3, 4);
+>                 }
+>                 if ((n7 & 0xC0) != 0x80) {
+>                     this.invalidByte(3, 3, n7);
+>                 }
+>                 final int n8 = (n == this.fOffset) ? this.fInputStream.read() : (this.fBuffer[n++] & 0xFF);
+>                 if (n8 == -1) {
+>                     this.expectedByte(4, 4);
+>                 }
+>                 if ((n8 & 0xC0) != 0x80) {
+>                     this.invalidByte(4, 4, n8);
+>                 }
+>                 final int n9 = (n2 << 2 & 0x1C) | (n6 >> 4 & 0x3);
+>                 if (n9 > 16) {
+>                     this.invalidSurrogate(n9);
+>                 }
+>                 final int n10 = 0xD800 | (n9 - 1 << 6 & 0x3C0) | (n6 << 2 & 0x3C) | (n7 >> 4 & 0x3);
+>                 final int fSurrogate2 = 0xDC00 | (n7 << 6 & 0x3C0) | (n8 & 0x3F);
+>                 fSurrogate = n10;
+>                 this.fSurrogate = fSurrogate2;
+>             }
+>             else {
+>                 this.invalidByte(1, 1, n2);
+>             }
+>         }
+>         else {
+>             this.fSurrogate = -1;
+>         }
+>         return fSurrogate;
+>     }

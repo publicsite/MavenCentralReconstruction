@@ -1,0 +1,26 @@
+/home/user/My_Stuff_Devuan/programming/mavenCentralSources/sources/structure/antlr/antlr/2.7.2/extractedSources/antlr/collections/impl/BitSet.java:169: error: cannot find symbol
+    public static Vector getRanges(int[] elems) {
+                  ^
+  symbol:   class Vector
+  location: class BitSet
+/home/user/My_Stuff_Devuan/programming/mavenCentralSources/sources/structure/antlr/antlr/2.7.2/extractedSources/antlr/collections/impl/BitSet.java:387: error: cannot find symbol
+    public String toString(String separator, Vector vocabulary) {
+                                             ^
+  symbol:   class Vector
+  location: class BitSet
+/home/user/My_Stuff_Devuan/programming/mavenCentralSources/sources/structure/antlr/antlr/2.7.2/extractedSources/antlr/collections/impl/BitSet.java:180: error: cannot find symbol
+        Vector ranges = new Vector(5);
+        ^
+  symbol:   class Vector
+  location: class BitSet
+/home/user/My_Stuff_Devuan/programming/mavenCentralSources/sources/structure/antlr/antlr/2.7.2/extractedSources/antlr/collections/impl/BitSet.java:180: error: cannot find symbol
+        Vector ranges = new Vector(5);
+                            ^
+  symbol:   class Vector
+  location: class BitSet
+/home/user/My_Stuff_Devuan/programming/mavenCentralSources/sources/structure/antlr/antlr/2.7.2/extractedSources/antlr/collections/impl/BitSet.java:193: error: cannot find symbol
+                ranges.appendElement(new IntRange(elems[i], elems[lastInRange]));
+                                         ^
+  symbol:   class IntRange
+  location: class BitSet
+5 errors

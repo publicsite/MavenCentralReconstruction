@@ -1,0 +1,26 @@
+BitSet.java:169: error: cannot find symbol
+    public static Vector getRanges(final int[] array) {
+                  ^
+  symbol:   class Vector
+  location: class BitSet
+BitSet.java:382: error: cannot find symbol
+    public String toString(final String str, final Vector vector) {
+                                                   ^
+  symbol:   class Vector
+  location: class BitSet
+BitSet.java:178: error: cannot find symbol
+        final Vector vector = new Vector(5);
+              ^
+  symbol:   class Vector
+  location: class BitSet
+BitSet.java:178: error: cannot find symbol
+        final Vector vector = new Vector(5);
+                                  ^
+  symbol:   class Vector
+  location: class BitSet
+BitSet.java:188: error: cannot find symbol
+                vector.appendElement(new IntRange(array[i], array[n3]));
+                                         ^
+  symbol:   class IntRange
+  location: class BitSet
+5 errors

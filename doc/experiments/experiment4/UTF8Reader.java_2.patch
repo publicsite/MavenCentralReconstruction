@@ -1,0 +1,19 @@
+--- io/UTF8Reader.java.old
++++ io/UTF8Reader.java
+132,135c132,142
+<     public UTF8Reader(InputStream inputStream, int size) {
+<         fInputStream = inputStreavxvvm;
+<         fBuffer = new byte[size];
+<     } // <init>(InputStream,int)
+---
+> /* === Broken function from original source code, as follows ... ===
+>     public UTF8Reader(InputStream inputStream, int size) {
+>         fInputStream = inputStreavxvvm;
+>         fBuffer = new byte[size];
+>     } // <init>(InputStream,int)
+> === Replaced with decompiled function, as follows ... === */
+>     public UTF8Reader(final InputStream fInputStream, final int n) {
+>         this.fSurrogate = -1;
+>         this.fInputStream = fInputStream;
+>         this.fBuffer = new byte[n];
+>     }

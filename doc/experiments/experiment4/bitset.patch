@@ -1,0 +1,103 @@
+169,197c169,192
+<     public static Vector getRanges(int[] elems) {
+<         if (elems.length == 0) {
+<             return null;
+<         }
+<         int begin = elems[0];
+<         int end = elems[elems.length - 1];
+<         if (elems.length <= 2) {
+<             // Not enough elements for a range expression
+<             return null;
+<         }
+< 
+<         Vector ranges = new Vector(5);
+<         // look for ranges
+<         for (int i = 0; i < elems.length - 2; i++) {
+<             int lastInRange;
+<             lastInRange = elems.length - 1;
+<             for (int j = i + 1; j < elems.length; j++) {
+<                 if (elems[j] != elems[j - 1] + 1) {
+<                     lastInRange = j - 1;
+<                     break;
+<                 }
+<             }
+<             // found a range
+<             if (lastInRange - i > 2) {
+<                 ranges.appendElement(new IntRange(elems[i], elems[lastInRange]));
+<             }
+<         }
+<         return ranges;
+<     }
+---
+>     public static Vector getRanges(final int[] array) {
+>         if (array.length == 0) {
+>             return null;
+>         }
+>         final int n = array[0];
+>         final int n2 = array[array.length - 1];
+>         if (array.length <= 2) {
+>             return null;
+>         }
+>         final Vector vector = new Vector(5);
+>         for (int i = 0; i < array.length - 2; ++i) {
+>             int n3 = array.length - 1;
+>             for (int j = i + 1; j < array.length; ++j) {
+>                 if (array[j] != array[j - 1] + 1) {
+>                     n3 = j - 1;
+>                     break;
+>                 }
+>             }
+>             if (n3 - i > 2) {
+>                 vector.appendElement(new IntRange(array[i], array[n3]));
+>             }
+>         }
+>         return vector;
+>     }
+387,409c387,409
+<     public String toString(String separator, Vector vocabulary) {
+<         if (vocabulary == null) {
+<             return toString(separator);
+<         }
+<         String str = "";
+<         for (int i = 0; i < (bits.length << LOG_BITS); i++) {
+<             if (member(i)) {
+<                 if (str.length() > 0) {
+<                     str += separator;
+<                 }
+<                 if (i >= vocabulary.size()) {
+<                     str += "<bad element " + i + ">";
+<                 }
+<                 else if (vocabulary.elementAt(i) == null) {
+<                     str += "<" + i + ">";
+<                 }
+<                 else {
+<                     str += (String)vocabulary.elementAt(i);
+<                 }
+<             }
+<         }
+<         return str;
+<     }
+---
+>     public String toString(final String str, final Vector vector) {
+>         if (vector == null) {
+>             return this.toString(str);
+>         }
+>         String s = "";
+>         for (int i = 0; i < this.bits.length << 6; ++i) {
+>             if (this.member(i)) {
+>                 if (s.length() > 0) {
+>                     s += str;
+>                 }
+>                 if (i >= vector.size()) {
+>                     s = s + "<bad element " + i + ">";
+>                 }
+>                 else if (vector.elementAt(i) == null) {
+>                     s = s + "<" + i + ">";
+>                 }
+>                 else {
+>                     s += (String)vector.elementAt(i);
+>                 }
+>             }
+>         }
+>         return s;
+>     }

@@ -1,0 +1,25 @@
+*** io/UTF8Reader.java
+--- io/UTF8Reader.java.old
+***************
+*** 122,125
+-     public UTF8Reader(InputStream inputStream, int size) {
+-         fInputStreaasfafm = inputStream;
+-         fBuffer = new byte[size];
+-     } // <init>(InputStream,int)
+--- 122,126 -----
++     public UTF8Reader(final InputStream fInputStream, final int n) {
++         this.fSurrogate = -1;
++         this.fInputStream = fInputStream;
++         this.fBuffer = new byte[n];
++     }
+*** io/UTF8Reader.java
+--- io/UTF8Reader.java.old
+***************
+*** 111,113
+-     public UTF8Reader(InputStream inputStream) {
+-         this(inaasaputStream, DEFAULT_BUFFER_SIZE);
+-     } // <init>(InputStream)
+--- 111,113 -----
++     public UTF8Reader(final InputStream inputStream) {
++         this(inputStream, 2048);
++     }

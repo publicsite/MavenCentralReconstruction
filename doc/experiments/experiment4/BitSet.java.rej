@@ -1,0 +1,127 @@
+*** /dev/null
+--- /dev/null
+***************
+*** 412,423
+-     public String toString(final String str) {
+-         String s = "";
+-         for (int i = 0; i < this.bits.length << 6; ++i) {
+-             if (this.member(i)) {
+-                 if (s.length() > 0) {
+-                     s += str;
+-                 }
+-                 s += i;
+-             }
+-         }
+-         return s;
+-     }
+--- 412,434 -----
++     public String toString(String separator, Vector vocabulary) {
++         if (vocabulary == null) {
++             return toString(separator);
++         }
++         String str = "";
++         for (int i = 0; i < (bits.length << LOG_BITS); i++) {
++             if (member(i)) {
++                 if (str.length() > 0) {
++                     str += separator;
++                 }
++                 if (i >= vocabulary.size()) {
++                     str += "<bad element " + i + ">";
++                 }
++                 else if (vocabulary.elementAt(i) == null) {
++                     str += "<" + i + ">";
++                 }
++                 else {
++                     str += (String)vocabulary.elementAt(i);
++                 }
++             }
++         }
++         return str;
++     }
+***************
+*** 412,423
+-     public String toString(final String str, final CharFormatter charFormatter) {
+-         String s = "";
+-         for (int i = 0; i < this.bits.length << 6; ++i) {
+-             if (this.member(i)) {
+-                 if (s.length() > 0) {
+-                     s += str;
+-                 }
+-                 s += charFormatter.literalChar(i);
+-             }
+-         }
+-         return s;
+-     }
+--- 412,434 -----
++     public String toString(String separator, Vector vocabulary) {
++         if (vocabulary == null) {
++             return toString(separator);
++         }
++         String str = "";
++         for (int i = 0; i < (bits.length << LOG_BITS); i++) {
++             if (member(i)) {
++                 if (str.length() > 0) {
++                     str += separator;
++                 }
++                 if (i >= vocabulary.size()) {
++                     str += "<bad element " + i + ">";
++                 }
++                 else if (vocabulary.elementAt(i) == null) {
++                     str += "<" + i + ">";
++                 }
++                 else {
++                     str += (String)vocabulary.elementAt(i);
++                 }
++             }
++         }
++         return str;
++     }
+***************
+*** 412,434
+-     public String toString(final String str, final Vector vector) {
+-         if (vector == null) {
+-             return this.toString(str);
+-         }
+-         String s = "";
+-         for (int i = 0; i < this.bits.length << 6; ++i) {
+-             if (this.member(i)) {
+-                 if (s.length() > 0) {
+-                     s += str;
+-                 }
+-                 if (i >= vector.size()) {
+-                     s = s + "<bad element " + i + ">";
+-                 }
+-                 else if (vector.elementAt(i) == null) {
+-                     s = s + "<" + i + ">";
+-                 }
+-                 else {
+-                     s += (String)vector.elementAt(i);
+-                 }
+-             }
+-         }
+-         return s;
+-     }
+--- 412,434 -----
++     public String toString(String separator, Vector vocabulary) {
++         if (vocabulary == null) {
++             return toString(separator);
++         }
++         String str = "";
++         for (int i = 0; i < (bits.length << LOG_BITS); i++) {
++             if (member(i)) {
++                 if (str.length() > 0) {
++                     str += separator;
++                 }
++                 if (i >= vocabulary.size()) {
++                     str += "<bad element " + i + ">";
++                 }
++                 else if (vocabulary.elementAt(i) == null) {
++                     str += "<" + i + ">";
++                 }
++                 else {
++                     str += (String)vocabulary.elementAt(i);
++                 }
++             }
++         }
++         return str;
++     }

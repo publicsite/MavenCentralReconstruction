@@ -1,0 +1,17 @@
+
+instead of sending a @fileList to javac, send the location of the .java files
+	to do this, you will have to use relative paths in the fileList, rather than absolute paths as we have at the moment.
+record output of javac command in .failed buildlogs
+
+___________________________________________________
+
+Work out what javadoc is, and how that works
+Create a licence checker from the pom files
+Use the licence check script to check the headers of the source code
+Find out what other filetypes there are for code eg. groovy/scala/whatever
+
+Generating (a) new product(s)
+	Especially ones that work without Maven
+	And that (can) use the jikes compiler
+
+

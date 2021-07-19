@@ -1,0 +1,7 @@
+HelloWorld.java:9: error: not a statement
+oops
+^
+HelloWorld.java:9: error: ';' expected
+oops
+    ^
+2 errors
