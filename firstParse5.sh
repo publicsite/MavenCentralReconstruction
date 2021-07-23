@@ -32,14 +32,14 @@ line="$4"
 			found="0"
 		fi
 
-		if [ -f "${thepwd}/buildlog/$(basename ${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).built)" ]; then
-			if [ -f "${thepwd}/buildlog/$(basename ${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).failed)" ]; then
-				rm "${thepwd}/buildlog/$(basename ${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).failed)"
+		if [ -f "${thepwd}/buildlog/$(basename ${line%.fileList}.built)" ]; then
+			if [ -f "${thepwd}/buildlog/$(basename ${line%.fileList}.failed)" ]; then
+				rm "${thepwd}/buildlog/$(basename ${line%.fileList}.failed)"
 			fi
 			found="0"
 		fi
 
-		printf "%s" "${line%.fileList}" > "${thepwd}/buildlog/$(basename "${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).pointer")"
+		printf "%s" "${line%.fileList}" > "${thepwd}/buildlog/$(basename "${line%.fileList}.pointer")"
 
 		if [ "${found}" = "1" ]; then
 
@@ -97,15 +97,15 @@ line="$4"
 			if [ ! -d "${thepwd}/fileListsAndDeps/$(printf "%s" ${basicPath} | cut -c 3-)/build" ]; then
 				mkdir "${thepwd}/fileListsAndDeps/$(printf "%s" ${basicPath} | cut -c 3-)/build"
 			fi
-			printf "javac %s -d "%s/fileListsAndDeps/%s/build"%s 1>/dev/null 2>%s/buildlog/%s\n" "${theClassPath}" "${thepwd}" "$(printf "%s" ${basicPath} | cut -c 3-)" "${filesToCompile}" "${thepwd}" "$(basename ${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).failed)"
-			javac ${theClassPath} -d "${thepwd}/fileListsAndDeps/$(printf "%s" ${basicPath} | cut -c 3-)/build"${filesToCompile} 1>/dev/null 2>"${thepwd}/buildlog/$(basename ${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).failed)"
+			printf "javac %s -d "%s/fileListsAndDeps/%s/build"%s 1>/dev/null 2>%s/buildlog/%s\n" "${theClassPath}" "${thepwd}" "$(printf "%s" ${basicPath} | cut -c 3-)" "${filesToCompile}" "${thepwd}" "$(basename ${line%.fileList}.failed)"
+			javac ${theClassPath} -d "${thepwd}/fileListsAndDeps/$(printf "%s" ${basicPath} | cut -c 3-)/build"${filesToCompile} 1>/dev/null 2>"${thepwd}/buildlog/$(basename ${line%.fileList}.failed)"
 			if [ "$?" = "0" ]; then
 				cd "${thepwd}/fileListsAndDeps/${basicPath}"
-				if [ -f "${thepwd}/buildlog/$(basename ${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).failed)" ]; then
-					rm "${thepwd}/buildlog/$(basename ${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).failed)"
+				if [ -f "${thepwd}/buildlog/$(basename ${line%.fileList}.failed)" ]; then
+					rm "${thepwd}/buildlog/$(basename ${line%.fileList}.failed)"
 				fi
 				mineSound
-				printf "Parse %s succeeded.\n" "$number" >> "${thepwd}/buildlog/$(basename "${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).built")"
+				printf "Parse %s succeeded.\n" "$number" >> "${thepwd}/buildlog/$(basename "${line%.fileList}.built")"
 				printf "... Compiled\n\n" 1>&2
 				#cd "${thepwd}/classpath"
 				#find "../fileListsAndDeps/$(dirname "${line}")/${bnTheFile%.fileList}" | while read line2; do
@@ -124,7 +124,7 @@ line="$4"
 			else
 
 				##delete this line
-				##if [ "$(tail -n 1 "${thepwd}/buildlog/$(basename ${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).failed)" | cut -d " " -f 1)" -le "${tryFixUnderErrors}" ]; then
+				##if [ "$(tail -n 1 "${thepwd}/buildlog/$(basename ${line%.fileList}.failed)" | cut -d " " -f 1)" -le "${tryFixUnderErrors}" ]; then
 
 
 				cd "${thepwd}/fileListsAndDeps/${basicPath}"
@@ -161,7 +161,7 @@ line="$4"
 
 					patchNumber="0"
 
-					cp -p "${thepwd}/buildlog/$(basename ${line%.fileList}_$(printf "%s" "${line}" | cut -d "/" -f 4).failed)" "${thepwd}/fixes/structure/$(printf "%s" "${basicPath}" | cut -c 3-)/extractedSources/${bnTheFile}.classErrors.log"
+					cp -p "${thepwd}/buildlog/$(basename ${line%.fileList}.failed)" "${thepwd}/fixes/structure/$(printf "%s" "${basicPath}" | cut -c 3-)/extractedSources/${bnTheFile}.classErrors.log"
 
 #cat ${bnTheFile}.classErrors.log
 
