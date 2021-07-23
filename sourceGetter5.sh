@@ -24,7 +24,7 @@ recurse(){
 #6 oldVersion
 
 	if [ "${2}" != "NOTHING" ]; then
-		if [ "${3}" = "NOTHING" ] || [ "$(printf "%s" "${3}" | cut -d "." -f 1 | isNumeric)" = "bad" ] ; then
+		if [ "${3}" = "NOTHING" ]; then
 
 			mkdir -p sources/structure/${1}/${2}
 
@@ -51,7 +51,7 @@ recurse(){
 				version="${latest%</latest>}"
 			fi
 
-			if [ "$version" = "" ] || [ "$(printf "%s" "$version" | cut -d "." -f 1 | isNumeric)" = "bad" ]; then
+			if [ "$version" = "" ]; then
 				version="$(cat sources/structure/${1}/${2}/maven-metadata.xml | while read line; do
 				toTestVersion="$(printf "%s" "$line" | sed "s#<build>.*</build>##g" | grep -o '<version>.*</version>' | cut -c 10-)"
 				toTestVersion="${toTestVersion%</version>}"
