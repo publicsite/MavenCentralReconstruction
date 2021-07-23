@@ -22,12 +22,12 @@ version="$(printf "%s" "${afile}" | cut -d "/" -f 4)"
 
 				packageName="$(printf "%s\n" "$lineNoComments" | grep "^\s*package " | cut -c 9- | cut -d ";" -f 1)"
 
-				className="$(printf "%s\n" "$lineNoComments" | grep -o "^\s*class .*" | head -n 1 | cut -d " " -f 2 | cut -d "<" -f 1 | cut -d "{" -f 1 | cut -d "(" -f 1 | tr -d '\n' | sed "s#\r##g" )"
+				className="$(printf "%s\n" "$lineNoComments" | grep -o "^.*\s*class .*" | head -n 1 | cut -d " " -f 2 | cut -d "<" -f 1 | cut -d "{" -f 1 | cut -d "(" -f 1 | tr -d '\n' | sed "s#\r##g" )"
 
 				if [ "${packageName}" != "" ]; then
 
 				if [ "${className}" = "" ]; then
-					className="$(printf "%s\n" "$lineNoComments" | grep -o "^\s*interface .*" | head -n 1 | cut -d " " -f 2 | cut -d "<" -f 1 | cut -d "{" -f 1 | cut -d "(" -f 1 | tr -d '\n' | sed "s#\r##g")"
+					className="$(printf "%s\n" "$lineNoComments" | grep -o "^.*\s*interface .*" | head -n 1 | cut -d " " -f 3 | cut -d "<" -f 1 | cut -d "{" -f 1 | cut -d "(" -f 1 | tr -d '\n' | sed "s#\r##g")"
 				fi
 
 				if [ "${className}" = "" ]; then
@@ -49,12 +49,12 @@ version="$(printf "%s" "${afile}" | cut -d "/" -f 4)"
 
 				packageName="$(printf "%s\n" "$lineNoComments" | grep "^\s*package " | cut -c 9- | cut -d ";" -f 1)"
 
-				className="$(printf "%s\n" "$lineNoComments" | grep -o "^\s*class .*" | head -n 1 | cut -d " " -f 2 | cut -d "<" -f 1 | cut -d "{" -f 1 | cut -d "(" -f 1 | tr -d '\n' | sed "s#\r##g" )"
+				className="$(printf "%s\n" "$lineNoComments" | grep -o "^.*\s*class .*" | head -n 1 | cut -d " " -f 2 | cut -d "<" -f 1 | cut -d "{" -f 1 | cut -d "(" -f 1 | tr -d '\n' | sed "s#\r##g" )"
 
 				if [ "${packageName}" != "" ]; then
 
 				if [ "${className}" = "" ]; then
-					className="$(printf "%s\n" "$lineNoComments" | grep -o "^\s*interface .*" | head -n 1 | cut -d " " -f 2 | cut -d "<" -f 1 | cut -d "{" -f 1 | cut -d "(" -f 1 | tr -d '\n' | sed "s#\r##g")"
+					className="$(printf "%s\n" "$lineNoComments" | grep -o "^.*\s*interface .*" | head -n 1 | cut -d " " -f 3 | cut -d "<" -f 1 | cut -d "{" -f 1 | cut -d "(" -f 1 | tr -d '\n' | sed "s#\r##g")"
 				fi
 
 				if [ "${className}" = "" ]; then
