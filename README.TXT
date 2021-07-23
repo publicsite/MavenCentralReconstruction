@@ -12,7 +12,7 @@ To use ...
 ./callGetSources.sh <groupId> <artifactId> <version>
 
 #to run reconstruction
-./reconstruct5.sh
+./reconstruct6.sh
 
 #to build classes
 ./firstParse5.sh
