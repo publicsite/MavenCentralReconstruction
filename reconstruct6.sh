@@ -17,14 +17,14 @@ version="$(printf "%s" "${afile}" | cut -d "/" -f 4)"
 		if [ -d "${groupId}/${artifactId}/${version}/extractedSources" ]; then
 
 			find -L "${groupId}/${artifactId}/${version}/extractedSources" -name "*.java" | while read line; do
-				printf "%s\n" "$line" >> "${thepwd}/fileListsAndDeps/${groupId}/${artifactId}/${version}/${groupId}.${artifactId}_vanilla.fileList"
+				printf "%s\n" "$line" >> "${thepwd}/fileListsAndDeps/${groupId}/${artifactId}/${version}/${groupId}.${artifactId}_${version}_vanilla.fileList"
 			done
 		fi
 
 
 		if [ -d "${groupId}/${artifactId}/${version}/Decompiled" ]; then
 			find -L "${groupId}/${artifactId}/${version}/Decompiled" -name "*.java" | while read line; do
-				printf "%s\n" "$line" >> "${thepwd}/fileListsAndDeps/${groupId}/${artifactId}/${version}/${groupId}.${artifactId}.fileList"
+				printf "%s\n" "$line" >> "${thepwd}/fileListsAndDeps/${groupId}/${artifactId}/${version}/${groupId}.${artifactId}_${version}.fileList"
 			done
 		fi
 
