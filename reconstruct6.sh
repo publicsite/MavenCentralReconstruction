@@ -24,7 +24,7 @@ version="$(printf "%s" "${afile}" | cut -d "/" -f 4)"
 
 		if [ -d "${groupId}/${artifactId}/${version}/Decompiled" ]; then
 			find -L "${groupId}/${artifactId}/${version}/Decompiled" -name "*.java" | while read line; do
-				printf "%s\n" "$line" >> "${thepwd}/fileListsAndDeps/${groupId}/${artifactId}/${version}/${groupId}.${artifactId}_${version}.fileList"
+				printf "%s\n" "$line" >> "${thepwd}/fileListsAndDeps/${groupId}/${artifactId}/${version}/${groupId}.${artifactId}_${version}_decompiled.fileList"
 			done
 		fi
 
