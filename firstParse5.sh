@@ -25,9 +25,9 @@ line="$4"
 		#if it's already been built, do not rebuild
 
 
-		if [ -f "${thepwd}/buildlog/$(basename ${line%_decompiled.secondary.fileList}_vanilla_$(printf "%s" "${line}" | cut -d "/" -f 4).built)" ]; then
-			if [ -f "${thepwd}/buildlog/$(basename ${line%_decompiled.secondary.fileList}_vanilla_$(printf "%s" "${line}" | cut -d "/" -f 4).failed)" ]; then
-				rm "${thepwd}/buildlog/$(basename ${line%_decompiled.secondary.fileList}_vanilla_$(printf "%s" "${line}" | cut -d "/" -f 4).failed)"
+		if [ -f "${thepwd}/buildlog/$(basename ${line%_decompiled.secondary.fileList}_vanilla.built)" ]; then
+			if [ -f "${thepwd}/buildlog/$(basename ${line%_decompiled.secondary.fileList}_vanilla.failed)" ]; then
+				rm "${thepwd}/buildlog/$(basename ${line%_decompiled.secondary.fileList}_vanilla.failed)"
 			fi
 			found="0"
 		fi
