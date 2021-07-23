@@ -52,14 +52,12 @@ recurse(){
 			fi
 
 			if [ "$version" = "" ]; then
-				version="$(cat sources/structure/${1}/${2}/maven-metadata.xml | while read line; do
-				toTestVersion="$(printf "%s" "$line" | sed "s#<build>.*</build>##g" | grep -o '<version>.*</version>' | cut -c 10-)"
+				version="$(cat sources/structure/${1}/${2}/maven-metadata.xml | sed -n "/<versions>/,/<\/versions>/p" | while read line; do
+				toTestVersion="$(printf "%s" "$line" | grep -o '<version>.*</version>' | cut -c 10-)"
 				toTestVersion="${toTestVersion%</version>}"
 
 					if [ "$toTestVersion" != "" ]; then
-						if [ "$(printf "%s\n" "$toTestVersion" | cut -d "." -f 1 | isNumeric)" = "good" ]; then
 							printf "%s\n" "$toTestVersion"
-						fi
 					fi
 				done | sort -V | tail -n 1)"
 			fi
@@ -269,7 +267,9 @@ fi
 	fi
 
 	if [ -f sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar ]; then
-		mkdir sources/structure/${groupId}/${artifactId}/${version}/Decompiled
+		if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" ]; then
+			mkdir sources/structure/${groupId}/${artifactId}/${version}/Decompiled
+		fi
 		printf "%s\n" "#This is not ideal, all sourceGetter5 could find is a binary jar, so you will need to decompile it and/or find a different source" >> sources/structure/${groupId}/${artifactId}/${version}/get_skel.sh
 		printf "%s\n" "wget "${repository}$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O ${artifactId}-${version}.jar" >> sources/structure/${groupId}/${artifactId}/${version}/get_skel.sh
 
