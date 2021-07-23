@@ -85,7 +85,7 @@ IFS='
 				grep "^.*${aFile}:[0-9]*:[0-9]*" "$1" | cut -d ":" -f 2 | printIfNumeric | while read lineNumber; do
 					testOne="$(printf "%s" "$line" | rev | cut -f 1 | rev | cut -d "," -f 1 | printIfNumeric)"
 					testTwo="$(printf "%s" "$line" | rev | cut -f 1 | rev | cut -d "," -f 2 | printIfNumeric)"
-					if [ "$testOne" != "" ] && [ "$testTwo" != "" ]; then
+					if [ "$testOne" != "" ] && [ "$testTwo" != "" ] && [ "$lineNumber" != "" ]; then
 						if [ "$lineNumber" -ge "$testOne" ] && [ "$lineNumber" -le "$testTwo" ]; then
 							printf "%s\t%s\n" "$line" "$aFile"
 						fi

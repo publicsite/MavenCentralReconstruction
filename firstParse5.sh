@@ -3,6 +3,7 @@
 ##tryFixUnderErrors="100"
 
 mineSound(){
+#echo "BUILT"
 paplay /usr/share/sounds/freedesktop/stereo/complete.oga
 }
 
@@ -83,8 +84,8 @@ line="$4"
 			oldIFS="$IFS"
 			IFS="$(printf "\n")"
 			while read line2; do
-				if [ -f "${thepwd}/sources/structure/$(printf "%s" "${basicPath}" | cut -c 3-)/extractedSources/$(printf "%s" "${line2}" | cut -d / -f 5-)" ]; then
-					filesToCompile="${filesToCompile} $(printf "%s" "${line2}" | cut -d / -f 5-)"
+				if [ -f "${thepwd}/sources/structure/$(printf "%s" "${basicPath}" | cut -c 3-)/$(printf "%s" "${line2}" | cut -d / -f 4-)" ]; then
+					filesToCompile="${filesToCompile} $(printf "%s" "${line2}" | cut -d / -f 4-)"
 				fi
 			done < "${bnTheFile}"
 			IFS="$oldIFS"
@@ -92,7 +93,7 @@ line="$4"
 			printf "Cycle %s...\n" "${number}" 1>&2 
 #echo "${basicPath}==="
 
-			cd "${thepwd}/sources/structure/$(printf "%s" "${basicPath}" | cut -c 3-)/extractedSources"
+			cd "${thepwd}/sources/structure/$(printf "%s" "${basicPath}" | cut -c 3-)"
 			if [ ! -d "${thepwd}/fileListsAndDeps/$(printf "%s" ${basicPath} | cut -c 3-)/build" ]; then
 				mkdir "${thepwd}/fileListsAndDeps/$(printf "%s" ${basicPath} | cut -c 3-)/build"
 			fi
@@ -129,7 +130,9 @@ line="$4"
 				cd "${thepwd}/fileListsAndDeps/${basicPath}"
 
 
-#				if [ ! -f "${thepwd}/fileListsAndDeps/${basicPath}/extractedSources/${bnTheFile}.classErrors.log" ]; then
+				if [ "$5" = "vanilla" ]; then
+
+#				if [ ! -f "${thepwd}/fileListsAndDeps/${basicPath}/extractedSources/${bnTheFile}.classErrors.log" ]
 #fixes/${basicPath}
 
 					mkdir -p "${thepwd}/fixes/structure/${basicPath}/generatedPatches"
@@ -145,13 +148,13 @@ line="$4"
 								rm "${thepwd}/fixes/structure/${line2}"
 							fi
 							cp -p "${thepwd}/sources/structure/${line2}" "${thepwd}/fixes/structure/$(dirname "${line2}")/"
-							filesToCompile="${filesToCompile} $(printf "%s" "${line2}" | cut -d / -f 5-)"
+							filesToCompile="${filesToCompile} $(printf "%s" "${line2}" | cut -d / -f 4-)"
 						fi
 					done < "${bnTheFile}"
 					IFS="$oldIFS"
 
 					mkdir -p "${thepwd}/fixes/structure/${basicPath}/extractedSources"
-					cd "${thepwd}/fixes/structure/${basicPath}/extractedSources"
+					cd "${thepwd}/fixes/structure/${basicPath}"
 
 					initAmountOfErrors="99999"
 					oldAmountOfErrors="${initAmountOfErrors}"
@@ -226,16 +229,16 @@ IFS='
 									if [ "$zound" = "0" ]; then
 
 										if [ "$(printf "%s" "${line2}" | cut -d "/" -f 5-)" = "${zFile}" ]; then
-											decompiledNew="$(printf "%s" "${line2}" | cut -d "/" -f 1-3)/Decompiled/$(printf "%s" "${line2}" | cut -d "/" -f 5-)"
+											anew="$(printf "%s" "${line2}" | cut -d "/" -f 1-3)/$(printf "%s" "${line2}" | cut -d "/" -f 4-)"
 
-											if [ -f "${thepwd}/sources/structure/${decompiledNew}" ]; then
+											if [ -f "${thepwd}/sources/structure/${anew}" ]; then
 												if [ -f "${thepwd}/fixes/structure/${line2}" ]; then
 													rm "${thepwd}/fixes/structure/${line2}"
 												fi
-												printf "Overwriting %s\n" "$(basename ${decompiledNew})"
-												printf "cp -p "sources/structure/%s" "/fixes/structure/%s/"\n" "${decompiledNew}" "$(dirname "${line2}")" >> "${thepwd}/fixes/structure/${fixBasicPath}/generatedPatches/${bnTheFile}_overwrites_${patchNumber}.sh"
+												printf "Overwriting %s\n" "$(basename ${anew})"
+												printf "cp -p "sources/structure/%s" "/fixes/structure/%s/"\n" "${anew}" "$(dirname "${line2}")" >> "${thepwd}/fixes/structure/${fixBasicPath}/generatedPatches/${bnTheFile}_overwrites_${patchNumber}.sh"
 												overwroteSome="1"
-												cp -p "${thepwd}/sources/structure/${decompiledNew}" "${thepwd}/fixes/structure/$(dirname "${line2}")/"
+												cp -p "${thepwd}/sources/structure/${anew}" "${thepwd}/fixes/structure/$(dirname "${line2}")/"
 											fi
 										fi
 zfiles="${zfiles}
@@ -243,7 +246,7 @@ ${zFile}"
 									fi
 								done
 
-								filesToCompile="${filesToCompile} ${thepwd}/fixes/structure/$(printf "%s" "${basicPath}" | cut -c 3-)/extractedSources/$(printf "%s" "${line2}" | cut -d "/" -f 5-)"
+								filesToCompile="${filesToCompile} ${thepwd}/fixes/structure/$(printf "%s" "${basicPath}" | cut -c 3-)/$(printf "%s" "${line2}" | cut -d "/" -f 5-)"
 
 							done < "${bnTheFile}"
 							IFS="$oldIFS"
@@ -258,7 +261,7 @@ ${zFile}"
 							else
 								printf "Attempting to compile with overwritten .java file(s).\n"
 
-								cd "${thepwd}/fixes/structure/${basicPath}/extractedSources"
+								cd "${thepwd}/fixes/structure/${basicPath}"
 
 								javac ${theClassPath} -d "${thepwd}/gsAndDeps/$(printf "%s" ${basicPath} | cut -c 3-)/build" ${filesToCompile} 1>/dev/null 2>"${thepwd}/fixes/structure/${fixBasicPath}/extractedSources/${bnTheFile}.classErrors.log"
 
@@ -353,6 +356,8 @@ ${zFile}"
 				##else
 				##	printf "More than %s errors ... not attempting to fix\n\n" "${tryFixUnderErrors}"
 				##fi
+
+				fi #if 5=vanilla
 
 				fi
 
