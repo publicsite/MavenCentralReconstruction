@@ -5,19 +5,43 @@ Copyright (C) J05HYYY
 The licence is: GPL v3
 
 See LICENCE.TXT for details.
+
+__________________
+
+To get dependencies ...
+
+sudo apt-get install git default-jdk procyon-decompiler java-wrappers pexec
 __________________
 
 To use ...
 
+#cd to the directory containing the tree
+
+
 #to download the sources
 ./callGetSources.sh <groupId> <artifactId> <version>
 
-#to run reconstruction
-./reconstruct6.sh
+	#this will create the sources/structure heiracy and download sources recursively. it will also download bin jars and automatically decompile them.
+
 
 #to build classes
-./firstParse5.sh
+./compile3.sh
 
+	#this will compile the sources, if that fails it will compile a hybrid of the sources and it's decompiled version, if that fails, it will compile the decompiled version.
+
+	#build logs are placed in buildlogs dir
+	#classes are placed in the classes dir
+	#hybrids are made in the hybrids dir
+
+#to package cleansed source jars
+./packageSourceJars4.sh
+
+	#this will package the cleansed source jars in the outCleansedJars/jars dir
+
+#to package cleansed bin jars
+./packageBinJars4.sh
+
+	#this will package the cleaned bin jars in the outCleansedJars/jars dir
 ___________________
 To donate:
 

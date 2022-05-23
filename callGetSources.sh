@@ -15,8 +15,10 @@ if [ -d "sources/structure" ]; then
 find "sources/structure" -type f -name dependencies.txt -exec rm {} \;
 fi
 
+if [ -f "sources/catalogue.txt" ]; then
 rm "sources/catalogue.txt"
+fi
 
 touch "sources/catalogue.txt"
 
-./sourceGetter5.sh "$1" "$2" "$3"
+./sourceGetter6.sh "$1" "$2" "$3"

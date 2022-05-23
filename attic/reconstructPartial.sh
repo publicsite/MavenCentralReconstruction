@@ -16,7 +16,7 @@ version="$(printf "%s" "${afile}" | cut -d "/" -f 4)"
 
 		if [ -d "${groupId}/${artifactId}/${version}/extractedSources" ]; then
 
-			find -L "${groupId}/${artifactId}/${version}/extractedSources" -name "*.java" | while read line; do
+			find "${groupId}/${artifactId}/${version}/extractedSources" -name "*.java" | while read line; do
 				printf "$line\n"
 				lineNoComments="$(sed '/\/\*.*\*\// d; /\/\*/,/\*\// d' "$line")"
 
@@ -43,7 +43,7 @@ version="$(printf "%s" "${afile}" | cut -d "/" -f 4)"
 
 		if [ -d "${groupId}/${artifactId}/${version}/Decompiled" ]; then
 
-			find -L "${groupId}/${artifactId}/${version}/Decompiled" -name "*.java" | while read line; do
+			find "${groupId}/${artifactId}/${version}/Decompiled" -name "*.java" | while read line; do
 				printf "$line\n"
 				lineNoComments="$(sed '/\/\*.*\*\// d; /\/\*/,/\*\// d' "$line")"
 
