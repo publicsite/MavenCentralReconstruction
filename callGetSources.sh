@@ -11,10 +11,6 @@ usage
 exit
 fi
 
-if [ -d "sources/structure" ]; then
-find "sources/structure" -type f -name dependencies.txt -exec rm {} \;
-fi
-
 if [ -f "sources/catalogue.txt" ]; then
 rm "sources/catalogue.txt"
 fi
