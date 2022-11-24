@@ -65,7 +65,9 @@ rm -rf workingdir/*
 	if [ "$foundfiles" = "1" ]; then
 
 		if [ "$complete" = 1 ]; then
-			if [ "$(grep "^${apackage} " ../outCleansedJars/sourceJarsComplete.txt)" = "" ]; then
+			if [ ! -f ../outCleansedJars/sourceJarsComplete.txt ]; then
+				echo "$apackage appears to be a complete reconstructed source jar" >> ../outCleansedJars/sourceJarsComplete.txt
+			elif [ "$(grep "^${apackage} " ../outCleansedJars/sourceJarsComplete.txt)" = "" ]; then
 				echo "$apackage appears to be a complete reconstructed source jar" >> ../outCleansedJars/sourceJarsComplete.txt
 			fi
 		fi
