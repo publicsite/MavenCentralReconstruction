@@ -256,7 +256,9 @@ echo "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata
 			if [ "${1}" != "\*" ] && [ "${2}" != "\*" ]; then
 
 				if [ -d "sources/structure/${4}/${5}/${6}" ]; then
-					if [ "$(grep "^${1}/${2}/${version}$" "sources/structure/${4}/${5}/${6}/dependencies.txt")" = "" ]; then
+					if [ ! -f "sources/structure/${4}/${5}/${6}/dependencies.txt" ]; then
+						printf "%s\n" "${1}/${2}/${version}" >> sources/structure/${4}/${5}/${6}/dependencies.txt
+					elif [ "$(grep "^${1}/${2}/${version}$" "sources/structure/${4}/${5}/${6}/dependencies.txt")" = "" ]; then
 						printf "%s\n" "${1}/${2}/${version}" >> sources/structure/${4}/${5}/${6}/dependencies.txt
 					fi
 				fi
@@ -271,7 +273,9 @@ echo "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata
 
 			if [ "${1}" != "\*" ] && [ "${2}" != "\*" ]; then
 				if [ -d "sources/structure/${4}/${5}/${6}" ]; then
-					if [ "$(grep "^${1}/${2}/${3}$" "sources/structure/${4}/${5}/${6}/dependencies.txt")" = "" ]; then
+					if [ ! -f "sources/structure/${4}/${5}/${6}/dependencies.txt" ]; then
+						printf "%s\n" "${1}/${2}/${3}" >> sources/structure/${4}/${5}/${6}/dependencies.txt
+					elif [ "$(grep "^${1}/${2}/${3}$" "sources/structure/${4}/${5}/${6}/dependencies.txt")" = "" ]; then
 						printf "%s\n" "${1}/${2}/${3}" >> sources/structure/${4}/${5}/${6}/dependencies.txt
 					fi
 				fi
@@ -426,7 +430,9 @@ echo $@
 							rm -rf tempExtract
 						fi
 
-						if [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
+						if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
+							echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
+						elif [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
 							echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 						fi
 						pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" "${1}" "${2}" "${3}"
@@ -537,7 +543,9 @@ echo $@
 								fi
 							fi
 
-							if [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
+							if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
+								echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
+							elif [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
 								echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 							fi
 
@@ -557,6 +565,9 @@ echo $@
 
 		else
 			#if dependencies file does exist ...
+			if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
+				touch "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt"
+			fi 
 			cat "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" | while read adependency; do
 				if [ "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" != "unknown.group.id" ]; then
 				./sourceGetter6.sh "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" "$(printf "%s" "${adependency}" | cut -d '/' -f 2)" "$(printf "%s" "${adependency}" | cut -d '/' -f 3)" "${groupId}" "${artifactId}" "${version}"
@@ -962,7 +973,9 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 						fi
 					fi
 
-					if [ "$(grep "^${groupId}/${testArtifactId}/${version}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
+					if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
+						echo "${groupId}/${testArtifactId}/${version}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
+					elif [ "$(grep "^${groupId}/${testArtifactId}/${version}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
 						echo "${groupId}/${testArtifactId}/${version}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 					fi
 
@@ -990,7 +1003,9 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 						fi
 					fi
 
-					if [ "$(grep "^${groupId}/${testArtifactId}/${testVersion}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
+					if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
+						echo "${groupId}/${testArtifactId}/${testVersion}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
+					elif [ "$(grep "^${groupId}/${testArtifactId}/${testVersion}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
 						echo "${groupId}/${testArtifactId}/${testVersion}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 					fi
 
