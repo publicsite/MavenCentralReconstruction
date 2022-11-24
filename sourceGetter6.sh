@@ -172,8 +172,8 @@ recurse(){
 
 				if ! [ -f sources/structure/${1}/${2}/maven-metadata.xml ]; then
 echo "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata.xml"
-					g "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata.xml" -O sources/structure/${1}/${2}/maven-metadata.xml 
-					#sleep 1
+					wget "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata.xml" -O sources/structure/${1}/${2}/maven-metadata.xml 
+					sleep 1
 				fi
 
 				if [ -f "sources/structure/${1}/${2}/maven-metadata.xml" ]; then
@@ -673,7 +673,7 @@ IFS="
 			if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar" ]; then
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}-sources.jar"
 				wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}-sources.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar
-				#sleep 1
+				sleep 1
 			fi
 
 			if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar" ]; then
@@ -796,14 +796,14 @@ echo "${scmurl} -b HEAD"
 				fi
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar"
 				wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar
-				#sleep 1
+				sleep 1
 			elif [ "$(du "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" | cut -c 1-1)" = "0" ]; then
 				if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
 					rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar"
 				fi
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar"
 				wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar
-				#sleep 1
+				sleep 1
 			fi
 
 			if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
@@ -863,14 +863,14 @@ IFS="
 						fi
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar"
 						wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar
-						#sleep 1
+						sleep 1
 					elif [ "$(du "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" | cut -c 1-1)" = "0" ]; then
 						if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
 							rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar"
 						fi
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar"
 						wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar
-						#sleep 1
+						sleep 1
 					fi
 
 					if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
@@ -1027,14 +1027,14 @@ IFS="
 					if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar"
 						wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar
-						#sleep 1
+						sleep 1
 					elif [ "$(du "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" | cut -c 1-1)" = "0" ]; then
 						if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
 							rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar"
 						fi
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar"
 						wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar
-						#sleep 1
+						sleep 1
 					fi
 
 					if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then

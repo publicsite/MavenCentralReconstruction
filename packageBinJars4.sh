@@ -105,7 +105,9 @@ rm -rf workingdir/*
 		fi
 
 		if [ "$complete" = 1 ]; then
-			echo "$apackage appears to be a complete reconstructed bin jar" >> ../outCleansedJars/binJarsComplete.txt
+			if [ "$(grep "^${apackage} " ../outCleansedJars/binJarsComplete.txt)" = "" ]; then
+				echo "$apackage appears to be a complete reconstructed bin jar" >> ../outCleansedJars/binJarsComplete.txt
+			fi
 		fi
 
 		printf "Creating Jar: %s\n" "${jarname}"
