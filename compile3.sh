@@ -82,7 +82,12 @@ while [ "$goagainthree" = "1" ]; do
 
 	#for apackage in $(find sources/structure -mindepth 3 -maxdepth 3 -type d); do
 			pexec -n $J -r $(find sources/structure -mindepth 3 -maxdepth 3 -type d) -e apackage -o - -c \
-				'./functionCompileDecompiled.sh $apackage'
+				'./functionCompileDecompiled.sh $apackage DecompiledCFR'
+	#done
+
+	#for apackage in $(find sources/structure -mindepth 3 -maxdepth 3 -type d); do
+			pexec -n $J -r $(find sources/structure -mindepth 3 -maxdepth 3 -type d) -e apackage -o - -c \
+				'./functionCompileDecompiled.sh $apackage DecompiledProcyon'
 	#done
 
 	newcount="$(find buildlog/ -mindepth 4 -maxdepth 4 -name "decompiledOnly" -exec find {} -name "*.failed" \; | wc -l)"

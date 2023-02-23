@@ -314,10 +314,10 @@ echo $@
 				find "sources/structure/${groupId}/${artifactId}/${version}" -name "*.jar" | while read subjar; do
 
 					jarType=""
-					if [ "$(echo "$subjar" | grep "sources.jar$")" = "" ]; then
-						jarType="bin"
-					else
+					if [ "$(echo "$subjar" | grep "sources.jar$")" != "" ] || [ "$(echo "$subjar" | grep "source.jar$")" != "" ]; then
 						jarType="source"
+					else
+						jarType="bin"
 					fi
 
 					if [ -d tempExtract ]; then
@@ -375,10 +375,24 @@ echo $@
 										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
 									fi
 								fi
-							fi
+							elif [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
+								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -c 1-1)" = "0" ]; then
+									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar"
+									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
+										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
+									fi
+								elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
+									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar"
+									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
+										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
+									fi
+								fi
+							fi	
 
 							if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
 								mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar
+							elif [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
+								mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar
 							fi
 
 							if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
@@ -387,6 +401,8 @@ echo $@
 
 							if [ -f "$subjar" ]; then
 								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ]; then
+									rm -f "$subjar"
+								elif  [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ]; then
 									rm -f "$subjar"
 								fi
 							fi
@@ -397,13 +413,19 @@ echo $@
 							if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
 								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -c 1-1)" = "0" ]; then
 									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
-									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled" ]; then
-										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled"
+									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
+										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon"
+									fi
+									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
+										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR"
 									fi
 								elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
 									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
-									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled" ]; then
-										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled"
+									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
+										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon"
+									fi
+									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
+										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR"
 									fi
 								fi
 							fi
@@ -460,10 +482,16 @@ echo $@
 						if [ "$(printf "%s" "$testArtifactIdTwo" | grep "javadoc$")" = "" ]; then
 
 
-							if [ "$(printf "%s" "$testArtifactIdTwo" | grep "source$")" != "" ]; then
+							if [ "$(printf "%s" "$testArtifactIdTwo" | grep "sources$")" != "" ] || [ "$(printf "%s" "$testArtifactIdTwo" | grep "source$")" != "" ]; then
 
 								#source jar
-								testArtifactIdTwo="${testArtifactIdTwo%.source}"
+								testArtifactIdTwo=""
+								if [ "$(printf "%s" "$testArtifactIdTwo" | grep "source$")" != "" ]; then
+									testArtifactIdTwo="${testArtifactIdTwo%.source}"
+								elif [ "$(printf "%s" "$testArtifactIdTwo" | grep "sources$")" != "" ]; then
+									testArtifactIdTwo="${testArtifactIdTwo%.sources}"
+								fi
+
 								mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}
 
 								if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
@@ -478,10 +506,24 @@ echo $@
 											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
 										fi
 									fi
+								elif [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
+									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -c 1-1)" = "0" ]; then
+										rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar"
+										if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
+											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
+										fi
+									elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
+										rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar"
+										if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
+											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
+										fi
+									fi
 								fi
 
 								if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
 									mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar
+								elif [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
+									mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar
 								fi
 
 								if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
@@ -497,6 +539,8 @@ echo $@
 								if [ -f "$subjar" ]; then
 									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ]; then
 										rm -f "$subjar"
+									elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ]; then
+										rm -f "$subjar"
 									fi
 								fi
 
@@ -507,13 +551,19 @@ echo $@
 								if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
 									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -c 1-1)" = "0" ]; then
 										rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
-										if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled" ]; then
-											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled"
+										if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
+											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon"
+										fi
+										if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
+											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR"
 										fi
 									elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
 										rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
-										if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled" ]; then
-											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled"
+										if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
+											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon"
+										fi
+										if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
+											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR"
 										fi
 									fi
 								fi
@@ -529,11 +579,15 @@ echo $@
 								fi
 
 								if [ -f sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar ]; then
-									if ! [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled" ]; then
-										mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled
+									if ! [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
+										mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon
+									fi
+									if ! [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
+										mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR
 									fi
 		
-									find "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar -o sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/Decompiled \;
+									find "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar -o sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon \;
+									find "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" -follow -maxdepth 0 -empty -exec java -jar cfr/cfr.jar sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar --outputdir sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR \;
 								fi
 
 								if [ -f "$subjar" ]; then
@@ -679,11 +733,21 @@ IFS="
 						rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar"
 					fi
 				fi
+			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar" ]; then
+				if ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar" ]; then
+					if [ "$(du "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar" | cut -c 1-1)" = "0" ]; then
+						rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar"
+					fi
+				fi
 			fi
 
 			if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar" ]; then
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}-sources.jar"
 				wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}-sources.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar
+				sleep 1
+			elif ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar" ]; then
+echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}-source.jar"
+				wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}-source.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar
 				sleep 1
 			fi
 
@@ -701,6 +765,22 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 						fi
 					else
 						rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar"
+					fi
+				fi
+			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar" ]; then
+				if ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar" ]; then
+					if ! [ "$(du "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar" | cut -c 1-1)" = "0" ]; then
+						if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ]; then
+							mkdir "sources/structure/${groupId}/${artifactId}/${version}/extractedSources"
+						fi
+						if [ "$(find -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" -maxdepth 1 -mindepth 1)" = "" ]; then
+							unzip "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar" -d sources/structure/${groupId}/${artifactId}/${version}/extractedSources
+							if [ "$?" = 0 ]; then
+								sourcesJarDownloadFailed=0
+							fi 
+						fi
+					else
+						rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar"
 					fi
 				fi
 			fi
@@ -824,21 +904,35 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 			fi
 
 			if [ -f sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar ]; then
-				if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" ]; then
-					mkdir -p sources/structure/${groupId}/${artifactId}/${version}/Decompiled
+				if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" ]; then
+					mkdir -p sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon
+				fi
+				if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" ]; then
+					mkdir -p sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR
 				fi
 		
 				#if directory is empty, decompile
-				find "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar -o sources/structure/${groupId}/${artifactId}/${version}/Decompiled \;
+				find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar -o sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon \;
+				find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" -follow -maxdepth 0 -empty -exec java -jar cfr/cfr.jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar --outputdir sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR \;
 			fi
 
-			if [ -d "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" ]; then
-				if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
-					if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/Decompiled/pom.xml" ]; then
-						cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/Decompiled/pom.xml"
+			if [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" ]; then
+				if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
+					if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon/pom.xml" ]; then
+						cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon/pom.xml"
 					fi
 				else
-					rmdir "sources/structure/${groupId}/${artifactId}/${version}/Decompiled"
+					rmdir "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon"
+				fi
+			fi
+
+			if [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" ]; then
+				if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
+					if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR/pom.xml" ]; then
+						cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR/pom.xml"
+					fi
+				else
+					rmdir "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR"
 				fi
 			fi
 		fi
@@ -894,21 +988,35 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 				IFS=$old_ifs
 
 				if [ -f sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar ]; then
-					if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" ]; then
-						mkdir -p sources/structure/${groupId}/${artifactId}/${version}/Decompiled
+					if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" ]; then
+						mkdir -p sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon
+					fi
+					if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" ]; then
+						mkdir -p sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR
 					fi
 		
 					#if directory is empty, decompile
-					find "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar -o sources/structure/${groupId}/${artifactId}/${version}/Decompiled \;
+					find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar -o sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon \;
+					find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" -follow -maxdepth 0 -empty -exec java -jar cfr/cfr.jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar --outputdir sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR \;
 				fi
 
-				if [ -d "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" ]; then
-					if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
-						if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/Decompiled/pom.xml" ]; then
-							cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/Decompiled/pom.xml"
+				if [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" ]; then
+					if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
+						if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon/pom.xml" ]; then
+							cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon/pom.xml"
 						fi
 					else
-						rmdir "sources/structure/${groupId}/${artifactId}/${version}/Decompiled"
+						rmdir "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon"
+					fi
+				fi
+
+				if [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" ]; then
+					if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
+						if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR/pom.xml" ]; then
+							cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR/pom.xml"
+						fi
+					else
+						rmdir "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR"
 					fi
 				fi
 	
@@ -1059,22 +1167,37 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 					fi
 
 					if [ -f sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar ]; then
-						if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" ]; then
-							mkdir -p sources/structure/${groupId}/${artifactId}/${version}/Decompiled
+						if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" ]; then
+							mkdir -p sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon
+						fi
+						if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" ]; then
+							mkdir -p sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR
 						fi
 
 						#if directory is empty, decompile
-						find "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar -o sources/structure/${groupId}/${artifactId}/${version}/Decompiled \;
+						find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar -o sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon \;
+						#TODO
 					fi
 
-					if [ -d "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" ]; then
-						if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/Decompiled" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
-							if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/Decompiled/pom.xml" ]; then
-								cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/Decompiled/pom.xml"
+					if [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" ]; then
+						if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
+							if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon/pom.xml" ]; then
+								cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon/pom.xml"
 							fi
 							break
 						else
-							rmdir "sources/structure/${groupId}/${artifactId}/${version}/Decompiled"
+							rmdir "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon"
+						fi
+					fi
+
+					if [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" ]; then
+						if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
+							if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR/pom.xml" ]; then
+								cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR/pom.xml"
+							fi
+							break
+						else
+							rmdir "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR"
 						fi
 					fi
 

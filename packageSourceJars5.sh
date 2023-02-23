@@ -13,17 +13,54 @@ rm -rf workingdir/*
 
 	complete=1
 
-	if [ -d "sources/structure/$apackage/Decompiled" ]; then
-		for javafile in $(find "sources/structure/$apackage/Decompiled" -name *.java); do
+	if [ -d "sources/structure/$apackage/DecompiledCFR" ]; then
+		for javafile in $(find "sources/structure/$apackage/DecompiledCFR" -name *.java); do
 			mkdir -p "workingdir/"$(dirname "$(echo "$javafile" | cut -d '/' -f 7-)")""
 			if ! [ -f "buildlog/$apackage/fromSource/$(basename "${javafile%.java}").success" ]; then
 				if ! [ -f "buildlog/$apackage/hybrids/$(basename "${javafile%.java}").success" ]; then
 					if [ -f "buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").success" ]; then
-						cp -a "${javafile}" workingdir/$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/
-						echo "$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/$(basename "${javafile}") came from a decompiled bin jar, and was then reproduced." >> workingdir/replica-origins.txt
-						foundfiles=1
+						if [ "$(cat "buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").success" | head -n 1)" = "CFR" ]; then
+							cp -a "${javafile}" workingdir/$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/
+							echo "$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/$(basename "${javafile}") came from a bin jar decompiled with CFR, and was then reproduced." >> workingdir/replica-origins.txt
+							foundfiles=1
+						fi
 					else
-						echo "$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/$(basename "${javafile}") failed to be reproduced, so was scrubbed from this jar." >> workingdir/replica-origins.txt
+						tosearch="$(echo "$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/$(basename "${javafile}") failed to be reproduced, so was scrubbed from this jar.")"
+						if [ -f workingdir/replica-origins.txt ]; then
+							if [ "$(grep "^${tosearch}$" workingdir/replica-origins.txt)" = "" ]; then
+								echo "${tosearch}" >> workingdir/replica-origins.txt
+							fi
+						else
+								echo "${tosearch}" >> workingdir/replica-origins.txt
+						fi
+						complete=0
+					fi
+				fi
+			fi
+		done
+	fi
+
+
+	if [ -d "sources/structure/$apackage/DecompiledProcyon" ]; then
+		for javafile in $(find "sources/structure/$apackage/DecompiledProcyon" -name *.java); do
+			mkdir -p "workingdir/"$(dirname "$(echo "$javafile" | cut -d '/' -f 7-)")""
+			if ! [ -f "buildlog/$apackage/fromSource/$(basename "${javafile%.java}").success" ]; then
+				if ! [ -f "buildlog/$apackage/hybrids/$(basename "${javafile%.java}").success" ]; then
+					if [ -f "buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").success" ]; then
+						if [ "$(cat "buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").success" | head -n 1)" = "Procyon" ]; then
+							cp -a "${javafile}" workingdir/$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/
+							echo "$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/$(basename "${javafile}") came from a bin jar decompiled with Procyon, and was then reproduced." >> workingdir/replica-origins.txt
+							foundfiles=1
+						fi
+					else
+						tosearch="$(echo "$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/$(basename "${javafile}") failed to be reproduced, so was scrubbed from this jar.")"
+						if [ -f workingdir/replica-origins.txt ]; then
+							if [ "$(grep "^${tosearch}$" workingdir/replica-origins.txt)" = "" ]; then
+								echo "${tosearch}" >> workingdir/replica-origins.txt
+							fi
+						else
+								echo "${tosearch}" >> workingdir/replica-origins.txt
+						fi
 						complete=0
 					fi
 				fi
@@ -43,7 +80,14 @@ rm -rf workingdir/*
 				echo "$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/$(basename "${javafile}") came from a sources jar but was patched, with sections taken from a decompiled bin jar, then reproduced." >> workingdir/replica-origins.txt
 				foundfiles=1
 			elif ! [ -f "buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").success" ]; then
-				echo "$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/$(basename "${javafile}") failed to be reproduced, so was scrubbed from this jar." >> workingdir/replica-origins.txt
+				tosearch="$(echo "$(dirname $(echo "$javafile" | cut -d '/' -f 7-))/$(basename "${javafile}") failed to be reproduced, so was scrubbed from this jar.")"
+				if [ -f workingdir/replica-origins.txt ]; then
+					if [ "$(grep "^${tosearch}$" workingdir/replica-origins.txt)" = "" ]; then
+						echo "${tosearch}" >> workingdir/replica-origins.txt
+					fi
+				else
+					echo "${tosearch}" >> workingdir/replica-origins.txt
+				fi
 				complete=0
 			fi
 		done

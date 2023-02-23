@@ -85,10 +85,44 @@ rm -rf workingdir/*
 
 	if [ -f "sources/structure/$apackage/Decompiled/META-INF/MANIFEST.MF" ]; then
 		mkdir -p workingdir/META-INF
-		cp -a "sources/structure/$apackage/Decompiled/META-INF/MANIFEST.MF" workingdir/META-INF/
+
+		#copy the file excluding blank lines
+		oldIFS="$IFS"
+		IFS="\n"
+		cat "sources/structure/$apackage/Decompiled/META-INF/MANIFEST.MF" | while read manifestline; do
+			if [ "$(echo "$manifestline" | grep "^[[:space:]]*$")" = "" ]; then
+				echo "$manifestline" >> workingdir/META-INF/MANIFEST.MF
+			fi
+		done
+		IFS="$oldIFS"
 	elif [ -f "sources/structure/$apackage/extractedSources/META-INF/MANIFEST.MF" ]; then
 		mkdir -p workingdir/META-INF
-		cp -a "sources/structure/$apackage/extractedSources/META-INF/MANIFEST.MF" workingdir/META-INF/
+
+		#copy the file excluding blank lines
+		oldIFS="$IFS"
+		IFS="\n"
+		cat "sources/structure/$apackage/extractedSources/META-INF/MANIFEST.MF" | while read manifestline; do
+			if [ "$(echo "$manifestline" | grep "^[[:space:]]*$")" = "" ]; then
+				echo "$manifestline" >> workingdir/META-INF/MANIFEST.MF
+			fi
+		done
+		IFS="$oldIFS"
+	fi
+
+	#append the main class to the jar
+	themainclass=""
+	if [ -f workingdir/META-INF/MANIFEST.MF ]; then
+		if [ "$(grep "^Main-Class:" workingdir/META-INF/MANIFEST.MF | cut -d : -f2- | tr -d ' ')" = "" ]; then
+			themainclass="$(grep -o "<mainClass>.*<\/mainClass>" sources/structure/$apackage/*.pom | cut -d ">" -f2 | cut -d "<" -f1 | head -n 1)"
+			if [ "$themainclass" != "" ]; then
+				echo "Main-Class: ${themainclass}" >> workingdir/META-INF/MANIFEST.MF
+			fi
+		fi
+	else
+		themainclass="$(grep -o "<mainClass>.*<\/mainClass>" sources/structure/$apackage/*.pom | cut -d ">" -f2 | cut -d "<" -f1 | head -n 1)"
+		if [ "$themainclass" != "" ]; then
+			echo "Main-Class: ${themainclass}" >> workingdir/META-INF/MANIFEST.MF
+		fi
 	fi
 
 	jarname="$(echo $apackage | cut -d '/' -f 2)-$(echo $apackage | cut -d '/' -f 3).jar"
@@ -107,8 +141,10 @@ rm -rf workingdir/*
 		if [ "$complete" = 1 ]; then
 			if [ ! -f ../outCleansedJars/binJarsComplete.txt ]; then
 				echo "$apackage appears to be a complete reconstructed bin jar" >> ../outCleansedJars/binJarsComplete.txt
-			elif [ "$(grep "^${apackage} " ../outCleansedJars/binJarsComplete.txt)" = "" ]; then
-				echo "$apackage appears to be a complete reconstructed bin jar" >> ../outCleansedJars/binJarsComplete.txt
+			else
+				if [ "$(grep "^${apackage} " ../outCleansedJars/binJarsComplete.txt)" = "" ]; then
+					echo "$apackage appears to be a complete reconstructed bin jar" >> ../outCleansedJars/binJarsComplete.txt
+				fi
 			fi
 		fi
 
