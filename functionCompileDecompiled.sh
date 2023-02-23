@@ -1,5 +1,5 @@
 #!/bin/sh
-
+echo "$2"
 
 thepwd="$PWD"
 
@@ -11,7 +11,7 @@ thepwd="$PWD"
 		directories=""
 
 
-		if [ -d "sources/structure/$apackage/${1}" ]; then
+		if [ -d "sources/structure/$apackage/${2}" ]; then
 
 
 			if [ -d "sources/structure/$apackage/extractedSources" ]; then
@@ -21,7 +21,7 @@ thepwd="$PWD"
 				done
 			else
 				#otherwise we use the decompiled source path
-				for directory in $(find "sources/structure/$apackage/${1}" -type d); do
+				for directory in $(find "sources/structure/$apackage/${2}" -type d); do
 					directories="$directory:$directories"
 				done
 			fi
@@ -44,7 +44,7 @@ thepwd="$PWD"
 
 			theClassPath="$(printf "%s" "$theClassPath" | cut -c 2-)"
 
-			for javafile in $(find "sources/structure/$apackage/${1}" -name *.java); do
+			for javafile in $(find "sources/structure/$apackage/${2}" -name *.java); do
 				if ! [ -f buildlog/$apackage/fromSource/$(basename "${javafile%.java}").success ] && ! [ -f buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").success ] && ! [ -f buildlog/$apackage/hybrids/$(basename "${javafile%.java}").success ]; then
 					echo "javac ${theClassPath} -d "classes/$apackage/decompiledOnly" -sourcepath "$directories" $javafile"
 					javac ${theClassPath} -d "classes/$apackage/decompiledOnly" -sourcepath "$directories" $javafile 2>buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").failed
