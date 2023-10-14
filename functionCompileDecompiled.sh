@@ -37,18 +37,26 @@ thepwd="$PWD"
 				done < "${thepwd}/sources/structure/${apackage}/dependencies.txt"
 				IFS="$oldIFS"
 
-				theClassPath=" -cp ${theClassPath}"
+				theClassPath=" -classpath ${theClassPath}"
 			else
-				theClassPath=" -cp ${theClassPath}"
+				theClassPath=" -classpath ${theClassPath}"
 			fi
 
 			theClassPath="$(printf "%s" "$theClassPath" | cut -c 2-)"
 
 			for javafile in $(find "sources/structure/$apackage/${2}" -name *.java); do
 				if ! [ -f buildlog/$apackage/fromSource/$(basename "${javafile%.java}").success ] && ! [ -f buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").success ] && ! [ -f buildlog/$apackage/hybrids/$(basename "${javafile%.java}").success ]; then
-					echo "javac ${theClassPath} -d "classes/$apackage/decompiledOnly" -sourcepath "$directories" $javafile"
-					javac ${theClassPath} -d "classes/$apackage/decompiledOnly" -sourcepath "$directories" $javafile 2>buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").failed
-					if [ "$?" = 0 ]; then
+					result=""
+					if [ "$2" = "jikes" ]; then
+						echo "jikes ${theClassPath} -d "classes/$apackage/decompiledOnly" $javafile"
+						jikes ${theClassPath} -d "classes/$apackage/decompiledOnly" $javafile 2>buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").failed
+						result="$?"
+					else
+						echo "javac ${theClassPath} -d "classes/$apackage/decompiledOnly" -sourcepath "$directories" $javafile"
+						javac ${theClassPath} -d "classes/$apackage/decompiledOnly" -sourcepath "$directories" $javafile 2>buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").failed
+						result="$?"
+					fi
+					if [ "$result" = 0 ]; then
 						mv buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").failed buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").success
 					fi
 				fi

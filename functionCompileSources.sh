@@ -25,18 +25,26 @@ thepwd="$PWD"
 						done < "${thepwd}/sources/structure/${apackage}/dependencies.txt"
 						IFS="$oldIFS"
 
-						theClassPath=" -cp ${theClassPath}"
+						theClassPath=" -classpath ${theClassPath}"
 					else
-						theClassPath=" -cp ${theClassPath}"
+						theClassPath=" -classpath ${theClassPath}"
 					fi
 
 					theClassPath="$(printf "%s" "$theClassPath" | cut -c 2-)"
 
 					for javafile in $(find "sources/structure/$apackage/extractedSources" -name *.java); do
 						if ! [ -f buildlog/$apackage/fromSource/$(basename "${javafile%.java}").success ]; then
-							echo "javac ${theClassPath} -d "classes/$apackage/fromSource" -sourcepath "$directories" $javafile"
-							javac ${theClassPath} -d "classes/$apackage/fromSource" -sourcepath "$directories" $javafile 2>buildlog/$apackage/fromSource/$(basename "${javafile%.java}").failed
-							if [ "$?" = 0 ]; then
+							result=""
+							if [ "$2" = "jikes" ]; then
+								echo "jikes ${theClassPath} -d "classes/$apackage/fromSource" -sourcepath "$directories" $javafile"
+								jikes ${theClassPath} -d "classes/$apackage/fromSource" $javafile 2>buildlog/$apackage/fromSource/$(basename "${javafile%.java}").failed
+								result="$?"
+							else
+								echo "javac ${theClassPath} -d "classes/$apackage/fromSource" -sourcepath "$directories" $javafile"
+								javac ${theClassPath} -d "classes/$apackage/fromSource" -sourcepath "$directories" $javafile 2>buildlog/$apackage/fromSource/$(basename "${javafile%.java}").failed
+								result="$?"
+							fi
+							if [ "$result" = 0 ]; then
 								#as the source build succeded, we delete logs for any decompiled builds and we also delete the decompiled class file if it exists
 								if [ -f buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").success ]; then
 									rm buildlog/$apackage/decompiledOnly/$(basename "${javafile%.java}").success

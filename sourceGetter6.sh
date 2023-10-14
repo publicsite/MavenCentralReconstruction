@@ -647,6 +647,23 @@ echo $@
 
 	if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
 		if ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
+
+			if [ -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle" ]; then
+				if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ] || ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ]; then
+					cat "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle" | sed -n '/^\/\*.*\*\//!p' | sed -n '/ \/\/.*/!p' | sed 's|/\*|\n&|g;s|*/|&\n|g' | sed '/\/\*/,/*\//d' > "sources/structure/${groupId}/${artifactId}/${version}/build.gradle"
+				fi
+			fi
+
+			if [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ]; then
+
+				#if there is a build.gradle, use gradle2pom.sh to create a pom
+				thispwd="$PWD"
+				cd "sources/structure/${groupId}/${artifactId}/${version}"
+				$thispwd/gradle2pom.sh "${groupId}" "${artifactId}" "${version}"
+				mv pom.xml ${artifactId}-${version}.pom
+				cd "$thispwd"
+			else
+
 				anindex=1
 				old_ifs=$IFS
 IFS="
@@ -661,6 +678,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 					anindex="$(expr $anindex + 1)"
 				done
 				IFS=$old_ifs
+			fi
 		fi
 	fi
 

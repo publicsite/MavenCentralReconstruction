@@ -25,10 +25,17 @@ while [ "$goagainthree" = "1" ]; do
 		newcount=0
 		echo "CYCLE 1..."
 
-			#for apackage in $(find sources/structure -mindepth 3 -maxdepth 3 -type d); do
-			pexec -n $J -r $(find sources/structure -mindepth 3 -maxdepth 3 -type d) -e apackage -o - -c \
-				'./functionCompileSources.sh $apackage'
-			#done
+			if [ "$1" = "jikes" ]; then
+				#for apackage in $(find sources/structure -mindepth 3 -maxdepth 3 -type d); do
+				pexec -n $J -r $(find sources/structure -mindepth 3 -maxdepth 3 -type d) -e apackage -o - -c \
+					'./functionCompileSources.sh "$apackage" "jikes"'
+				#done
+			else
+				#for apackage in $(find sources/structure -mindepth 3 -maxdepth 3 -type d); do
+				pexec -n $J -r $(find sources/structure -mindepth 3 -maxdepth 3 -type d) -e apackage -o - -c \
+					'./functionCompileSources.sh "$apackage"'
+				#done
+			fi
 
 			newcount="$(find buildlog/ -mindepth 4 -maxdepth 4 -name "fromSource" -exec find {} -name "*.failed" \; | wc -l)"
 
@@ -53,10 +60,17 @@ while [ "$goagainthree" = "1" ]; do
 
 		echo "CYCLE 2..."
 
-		#for apackage in $(find sources/structure -mindepth 3 -maxdepth 3 -type d); do
-			pexec -n $J -r $(find sources/structure -mindepth 3 -maxdepth 3 -type d) -e apackage -o - -c \
-				'./functionGenerateHybrid.sh $apackage'
-		#done
+		if [ "$1" = "jikes" ]; then
+			#for apackage in $(find sources/structure -mindepth 3 -maxdepth 3 -type d); do
+				pexec -n $J -r $(find sources/structure -mindepth 3 -maxdepth 3 -type d) -e apackage -o - -c \
+					'./functionGenerateHybrid.sh "$apackage" "jikes"'
+			#done
+		else
+			#for apackage in $(find sources/structure -mindepth 3 -maxdepth 3 -type d); do
+				pexec -n $J -r $(find sources/structure -mindepth 3 -maxdepth 3 -type d) -e apackage -o - -c \
+					'./functionGenerateHybrid.sh "$apackage" "$1"'
+			#done
+		fi
 
 		newcount="$(find buildlog/ -mindepth 4 -maxdepth 4 -name "hybrids" -exec find {} -name "*.failed" \; | wc -l)"
 

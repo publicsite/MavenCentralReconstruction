@@ -43,6 +43,14 @@ To use ...
 
 	#this will package the cleaned bin jars in the outCleansedJars/jars dir
 ___________________
+
+MavenCentralReconstruction now has very limited support for build.gradle
+
+If you don't want to use callGetSources.sh , you can always create the tree, and put the sources in
+
+root_of_MavenCentralReconstruction/sources/structure/<groupId>/<artifactId>/<version>/extractedSources
+___________________
+
 To donate:
 
 https://www.paypal.com/donate/?hosted_button_id=SZABYRV48SAXW
