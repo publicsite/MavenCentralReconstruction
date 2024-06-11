@@ -17,4 +17,4 @@ fi
 
 touch "sources/catalogue.txt"
 
-./sourceGetter6.sh "$1" "$2" "$3"
+./sourceGetter7.sh "$1" "$2" "$3"

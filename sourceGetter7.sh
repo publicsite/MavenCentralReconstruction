@@ -2,9 +2,11 @@
 #Copyright (c) J05HYYY
 #Licence: https://www.gnu.org/licenses/gpl-3.0.txt
 
+forcepomgood="FORCE" #change to "LIBREONLY" to switch to only libre software
+
 usage(){
-	printf "./sourceGetter6.sh <groupId> <artifactId> <version>\n\nTry and recursively download ALL source dependencies, and their dependencies ... for a package on Maven Central.\n\n"
-	printf "sourceGetter6 requires git and subversion \n\nIf it can't find a git or subversion repository for a package, it will download the sources.jar, which is unfortunately usually incomplete\n\n"
+	printf "./sourceGetter7.sh <groupId> <artifactId> <version>\n\nTry and recursively download ALL source dependencies, and their dependencies ... for a package on Maven Central.\n\n"
+	printf "sourceGetter7 requires git and subversion \n\nIf it can't find a git or subversion repository for a package, it will download the sources.jar, which is unfortunately usually incomplete\n\n"
 	printf "The idea of this program is to try and rescue, (yes ... rescue) some software [but in practice] probably that's easier said than done.\n\n"
 }
 
@@ -266,7 +268,7 @@ echo "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata
 				if [ "$(grep "^${1}/${2}/${version}$" sources/catalogue.txt )" = "" ]; then
 #					printf "FOUND DEPENDENCY: %s %s %s\n" "${1}" "${2}" "${version}"
 					printf "${1}/${2}/${version}\n" >> sources/catalogue.txt
-					./sourceGetter6.sh "${1}" "${2}" "${version}" "${4}" "${5}" "${6}" "1"
+					./sourceGetter7.sh "${1}" "${2}" "${version}" "${4}" "${5}" "${6}" "1"
 				fi
 			fi
 		else
@@ -283,7 +285,7 @@ echo "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata
 				if [ "$(grep "^${1}/${2}/${3}$" sources/catalogue.txt )" = "" ]; then
 #					printf "FOUND DEPENDENCY: %s %s %s\n" "${1}" "${2}" "${3}"
 					printf "${1}/${2}/${3}\n" >> sources/catalogue.txt
-					./sourceGetter6.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "1"
+					./sourceGetter7.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "1"
 				fi
 			fi
 		fi
@@ -457,7 +459,7 @@ echo $@
 						elif [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
 							echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 						fi
-						pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" "${1}" "${2}" "${3}"
+						pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}g" "${1}" "${2}" "${3}"
 
 					else
 						echo "UH OH, NO POM."
@@ -624,7 +626,7 @@ echo $@
 			fi 
 			cat "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" | while read adependency; do
 				if [ "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" != "unknown.group.id" ]; then
-				./sourceGetter6.sh "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" "$(printf "%s" "${adependency}" | cut -d '/' -f 2)" "$(printf "%s" "${adependency}" | cut -d '/' -f 3)" "${groupId}" "${artifactId}" "${version}"
+				./sourceGetter7.sh "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" "$(printf "%s" "${adependency}" | cut -d '/' -f 2)" "$(printf "%s" "${adependency}" | cut -d '/' -f 3)" "${groupId}" "${artifactId}" "${version}"
 				fi
 			done
 		fi
@@ -644,6 +646,8 @@ echo $@
 		export theRepos="$(deleteDuplicates "$theRepos" "$(printf "%s\n%s\n" "${theRepos}" "$(getRepos "sources/structure/${1}/${2}/${3}/${2}-${3}.pom")" )")"
 	fi
 	export theRepos="$(deleteDuplicates "$theRepos" "$(printf "%s\n%s" "${theRepos}" "$(getRepos "sources/structure/${4}/${5}/${6}/${5}-${6}.pom")" )")"
+
+	ispomgood=""
 
 	if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
 		if ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
@@ -672,6 +676,40 @@ IFS="
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.pom"
 						wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.pom" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom
 						if [ "$?" = 0 ]; then
+							#check licence information
+							if [ "$forcepomgood" = "FORCE" ]; then
+								ispomgood="GOOD"
+							else
+								ispomgood="$(./checkLicencePom.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom")"
+							fi
+
+							#if the pom doesn't contain licence information, get maven-metadata.xml and check that
+
+							if [ "$ispomgood" = "NO" ]; then
+ 								if [ -f "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" ]; then
+									if [ "$(du "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" | cut -c 1-1)" = "0" ]; then
+										rm sources/structure/${groupId}/${artifactId}/maven-metadata.xml
+									fi
+								fi
+
+								if ! [ -f sources/structure/${groupId}/${artifactId}/maven-metadata.xml ]; then
+echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/maven-metadata.xml"
+								wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/maven-metadata.xml" -O sources/structure/${groupId}/${artifactId}/maven-metadata.xml 
+									sleep 1
+								fi
+
+								if [ -f "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" ]; then
+									if [ "$(du "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" | cut -c 1-1)" = "0" ]; then
+										rm sources/structure/${groupId}/${artifactId}/maven-metadata.xml
+									fi
+								fi
+
+								ispomgood="$(./checkLicencePom.sh "sources/structure/${groupId}/${artifactId}/maven-metadata.xml")"
+							fi
+
+							echo "${groupId}/${artifactId}/${version}	${ispomgood}" >> sources/structure/${groupId}/${artifactId}/${version}/licences.txt
+
+
 							found=yes
 							break
 						fi
@@ -737,7 +775,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 
 		printf "${indent}sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}\n" >> buildOrder.txt
 
-		if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ] && ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ]; then
+		if [ "$ispomgood" = "GOOD" ] && ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ] && ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ]; then
 			sourcesJarDownloadFailed=1
 
 			#gprintf "GETTING SOURCES %s FROM JAR\n" "$(printf "%s" "$connection" | cut -c 5-)"
@@ -965,199 +1003,207 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 				#try a different mirror
 				if [ "$(echo $theRepos | wc -l)" -gt "$sourceNumber" ]; then
 					sourceNumber="$(expr $sourceNumber + 1)"
-					./sourceGetter6.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
+					./sourceGetter7.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
 				fi
 			else
 				if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/pom.xml" ]; then
 					if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
 						cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/pom.xml"
+
+						if [ "$forcepomgood" = "FORCE" ]; then
+							ispomgood="GOOD"
+						else
+							ispomgood="$(./checkLicencePom.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom")"
+						fi
 					fi
 				fi
 
-				old_ifs=$IFS
+				if [ "$ispomgood" = "GOOD" ]; then
+
+					old_ifs=$IFS
 IFS="
 "
-				for repository in $theRepos; do
+					for repository in $theRepos; do
 
-					#get binary jar too
-					if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
-						if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
-							rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar"
-						fi
+						#get binary jar too
+						if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
+							if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
+								rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar"
+							fi
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar"
-						wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar
-						sleep 1
-					elif [ "$(du "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" | cut -c 1-1)" = "0" ]; then
-						if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
-							rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar"
-						fi
+							wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar
+							sleep 1
+						elif [ "$(du "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" | cut -c 1-1)" = "0" ]; then
+							if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
+								rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar"
+							fi
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar"
-						wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar
-						sleep 1
-					fi
+							wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.jar" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar
+							sleep 1
+						fi
 
-					if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
-						if [ "$(du "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" | cut -c 1-1)" = "0" ]; then
-							rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar"
+						if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" ]; then
+							if [ "$(du "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar" | cut -c 1-1)" = "0" ]; then
+								rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar"
+							fi
 						fi
-					fi
 	
-				done
-				IFS=$old_ifs
+					done
+					IFS=$old_ifs
 
-				if [ -f sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar ]; then
-					if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" ]; then
-						mkdir -p sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon
-					fi
-					if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" ]; then
-						mkdir -p sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR
-					fi
+					if [ -f sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar ]; then
+						if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" ]; then
+							mkdir -p sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon
+						fi
+						if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" ]; then
+							mkdir -p sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR
+						fi
 		
-					#if directory is empty, decompile
-					find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar -o sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon \;
-					find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" -follow -maxdepth 0 -empty -exec java -jar cfr/cfr.jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar --outputdir sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR \;
-				fi
-
-				if [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" ]; then
-					if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
-						if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon/pom.xml" ]; then
-							cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon/pom.xml"
-						fi
-					else
-						rmdir "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon"
+						#if directory is empty, decompile
+						find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar -o sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon \;
+						find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" -follow -maxdepth 0 -empty -exec java -jar cfr/cfr.jar sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.jar --outputdir sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR \;
 					fi
-				fi
 
-				if [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" ]; then
-					if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
-						if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR/pom.xml" ]; then
-							cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR/pom.xml"
+					if [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" ]; then
+						if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
+							if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon/pom.xml" ]; then
+								cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon/pom.xml"
+							fi
+						else
+							rmdir "sources/structure/${groupId}/${artifactId}/${version}/DecompiledProcyon"
 						fi
-					else
-						rmdir "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR"
 					fi
-				fi
+
+					if [ -d "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" ]; then
+						if [ "$(find "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR" -follow -maxdepth 1 -mindepth 1)" != "" ]; then
+							if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR/pom.xml" ]; then
+								cp -a "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR/pom.xml"
+							fi
+						else
+							rmdir "sources/structure/${groupId}/${artifactId}/${version}/DecompiledCFR"
+						fi
+					fi
 	
+				fi
 			fi
 		else
 			#try a different mirror
 			if [ "$(echo $theRepos | wc -l)" -gt "$sourceNumber" ]; then
 				sourceNumber="$(expr $sourceNumber + 1)"
-				./sourceGetter6.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
+				./sourceGetter7.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
 			fi
 		fi
 
-	if [ "$processDeps" = "yes" ]; then
-		#if dependencies file does not exist ...
+		if [ "$processDeps" = "yes" ]; then
+			#if dependencies file does not exist ...
 
-		#process dependencies
+			#process dependencies
 
-		pomxmldependencies "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "${1}" "${2}" "${3}"
+			pomxmldependencies "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "${1}" "${2}" "${3}"
 
-		#process submodules
+			#process submodules
 
-		if [ -d "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ]; then
+			if [ -d "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ]; then
 
-			find "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" -mindepth 2 -name pom.xml -printf "%d %p\n" | sort -nr | cut -d ' ' -f 2- | while read submodule; do
+				find "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" -mindepth 2 -name pom.xml -printf "%d %p\n" | sort -nr | cut -d ' ' -f 2- | while read submodule; do
 
-				if [ -f "$submodule" ]; then
-					theXML="$(cat $submodule | sed 's#\r##g' | sed 's#[ \t]##g' | tr -d "\n")"
-				fi
+					if [ -f "$submodule" ]; then
+						theXML="$(cat $submodule | sed 's#\r##g' | sed 's#[ \t]##g' | tr -d "\n")"
+					fi
 
-				theXMLnoParent="$(printf "%s" "${theXML}" | sed "s#<parent>.*</parent>##g" | sed "s#<build>.*</build>##g" | sed "s#<dependencies>.*</dependencies>##g" | sed "s#<reporting>.*</reporting>##g")"
-				testVersion="$(printf "%s" "${theXMLnoParent}" | grep -o '<version>.*</version>'| cut -d '>' -f 2 | cut -d '<' -f 1)"
+					theXMLnoParent="$(printf "%s" "${theXML}" | sed "s#<parent>.*</parent>##g" | sed "s#<build>.*</build>##g" | sed "s#<dependencies>.*</dependencies>##g" | sed "s#<reporting>.*</reporting>##g")"
+					testVersion="$(printf "%s" "${theXMLnoParent}" | grep -o '<version>.*</version>'| cut -d '>' -f 2 | cut -d '<' -f 1)"
 		
-				if [ "$(printf "%s\n" "$testVersion" | cut -c 1-2)" = "\${" ]; then
-					theSpecial="$(printf "${testVersion%\}}" | cut -c 3-)"
-					special="$(printf "%s" "$theXMLnoParent" | sed -n "s:.*<${theSpecial}>\(.*\)</${theSpecial}>.*:\1:p")"
-					testVersion="${special}"
-				fi
+					if [ "$(printf "%s\n" "$testVersion" | cut -c 1-2)" = "\${" ]; then
+						theSpecial="$(printf "${testVersion%\}}" | cut -c 3-)"
+						special="$(printf "%s" "$theXMLnoParent" | sed -n "s:.*<${theSpecial}>\(.*\)</${theSpecial}>.*:\1:p")"
+						testVersion="${special}"
+					fi
 	
-				testArtifactId="$(printf "%s" "${theXMLnoParent}" | grep -o '<artifactId>.*</artifactId>' | cut -d '>' -f 2 | cut -d '<' -f 1)"
+					testArtifactId="$(printf "%s" "${theXMLnoParent}" | grep -o '<artifactId>.*</artifactId>' | cut -d '>' -f 2 | cut -d '<' -f 1)"
 
 
-				if [ "$(printf "%s\n" "$testArtifactId" | cut -c 1-2)" = "\${" ]; then
-					theSpecial="$(printf "${testArtifactId%\}}" | cut -c 3-)"
-					special="$(printf "%s" "$theXMLnoParent" | sed -n "s:.*<${theSpecial}>\(.*\)</${theSpecial}>.*:\1:p")"
-					testArtifactId="${special}"
-				fi
+					if [ "$(printf "%s\n" "$testArtifactId" | cut -c 1-2)" = "\${" ]; then
+						theSpecial="$(printf "${testArtifactId%\}}" | cut -c 3-)"
+						special="$(printf "%s" "$theXMLnoParent" | sed -n "s:.*<${theSpecial}>\(.*\)</${theSpecial}>.*:\1:p")"
+						testArtifactId="${special}"
+					fi
 	
-				if [ "$testVersion" = "" ]; then
-					mkdir -p sources/structure/${groupId}/${testArtifactId}/${version}
+					if [ "$testVersion" = "" ]; then
+						mkdir -p sources/structure/${groupId}/${testArtifactId}/${version}
 
-					#printf "%s\n" "${groupId}/${testArtifactId}/${version}" >> sources/structure/${1}/${2}/${3}/dependencies.txt
+						#printf "%s\n" "${groupId}/${testArtifactId}/${version}" >> sources/structure/${1}/${2}/${3}/dependencies.txt
 
-					if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" ]; then
-						if [ -f "$(dirname "${submodule}")/pom.xml" ]; then
-							cp -a "$(dirname "${submodule}")/pom.xml" "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom"
+						if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" ]; then
+							if [ -f "$(dirname "${submodule}")/pom.xml" ]; then
+								cp -a "$(dirname "${submodule}")/pom.xml" "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom"
+							fi
 						fi
-					fi
 
-					if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${version}/extractedSources" ]; then
-						if [ -d "$(dirname "${submodule}")" ]; then
-							mv "$(dirname "${submodule}")" "sources/structure/${groupId}/${testArtifactId}/${version}/extractedSources"
+						if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${version}/extractedSources" ]; then
+							if [ -d "$(dirname "${submodule}")" ]; then
+								mv "$(dirname "${submodule}")" "sources/structure/${groupId}/${testArtifactId}/${version}/extractedSources"
+							fi
 						fi
-					fi
 
-					if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
-						echo "${groupId}/${testArtifactId}/${version}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
-					elif [ "$(grep "^${groupId}/${testArtifactId}/${version}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
-						echo "${groupId}/${testArtifactId}/${version}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
-					fi
-
-					pomxmldependencies "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" "${1}" "${2}" "${3}"
-
-					#if [ -f "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" ]; then
-					#	cat "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" | sed -n "/<modules>/,/<\/modules>/p" | grep -o "<module>.*</module>" | cut -d '>' -f 2 | cut -d '<' -f 1 | while read amodule; do
-					#	done
-					#fi
-
-				else
-					mkdir -p sources/structure/${groupId}/${testArtifactId}/${testVersion}
-
-					#printf "%s\n" "${groupId}/${testArtifactId}/${testVersion}" >> sources/structure/${1}/${2}/${3}/dependencies.txt
-
-					if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom" ]; then
-						if [ -f "$(dirname "${submodule}")/pom.xml" ]; then
-							cp -a "$(dirname "${submodule}")/pom.xml" "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom"
+						if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
+							echo "${groupId}/${testArtifactId}/${version}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
+						elif [ "$(grep "^${groupId}/${testArtifactId}/${version}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
+							echo "${groupId}/${testArtifactId}/${version}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 						fi
-					fi
 
-					if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${testVersion}/extractedSources" ]; then
-						if [ -d "$(dirname "${submodule}")" ]; then
-							mv "$(dirname "${submodule}")" "sources/structure/${groupId}/${testArtifactId}/${testVersion}/extractedSources"
+						pomxmldependencies "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" "${1}" "${2}" "${3}"
+
+						#if [ -f "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" ]; then
+						#	cat "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" | sed -n "/<modules>/,/<\/modules>/p" | grep -o "<module>.*</module>" | cut -d '>' -f 2 | cut -d '<' -f 1 | while read amodule; do
+						#	done
+						#fi
+
+					else
+						mkdir -p sources/structure/${groupId}/${testArtifactId}/${testVersion}
+
+						#printf "%s\n" "${groupId}/${testArtifactId}/${testVersion}" >> sources/structure/${1}/${2}/${3}/dependencies.txt
+
+						if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom" ]; then
+							if [ -f "$(dirname "${submodule}")/pom.xml" ]; then
+								cp -a "$(dirname "${submodule}")/pom.xml" "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom"
+							fi
 						fi
+
+						if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${testVersion}/extractedSources" ]; then
+							if [ -d "$(dirname "${submodule}")" ]; then
+								mv "$(dirname "${submodule}")" "sources/structure/${groupId}/${testArtifactId}/${testVersion}/extractedSources"
+							fi
+						fi
+
+						if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
+							echo "${groupId}/${testArtifactId}/${testVersion}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
+						elif [ "$(grep "^${groupId}/${testArtifactId}/${testVersion}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
+							echo "${groupId}/${testArtifactId}/${testVersion}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
+						fi
+
+						pomxmldependencies "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom" "${1}" "${2}" "${3}"
+
+						#if [ -f "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${testVersion}.pom" ]; then
+						#	cat "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom" | sed -n "/<modules>/,/<\/modules>/p" | grep -o "<module>.*</module>" | cut -d '>' -f 2 | cut -d '<' -f 1 | while read amodule; do
+						#	done
+						#fi
 					fi
 
-					if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
-						echo "${groupId}/${testArtifactId}/${testVersion}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
-					elif [ "$(grep "^${groupId}/${testArtifactId}/${testVersion}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
-						echo "${groupId}/${testArtifactId}/${testVersion}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
-					fi
 
-					pomxmldependencies "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom" "${1}" "${2}" "${3}"
+				done
 
-					#if [ -f "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${testVersion}.pom" ]; then
-					#	cat "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom" | sed -n "/<modules>/,/<\/modules>/p" | grep -o "<module>.*</module>" | cut -d '>' -f 2 | cut -d '<' -f 1 | while read amodule; do
-					#	done
-					#fi
-				fi
-
-
-			done
-
+			fi
 		fi
-	fi
 
 	#if not found, try a different mirror
 	elif [ "$(echo $theRepos | wc -l)" -gt "$sourceNumber" ] && [ "$4" != "" ]; then
 		sourceNumber="$(expr $sourceNumber + 1)"
-		./sourceGetter6.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
+		./sourceGetter7.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
 
 	#if not found and no mirrors left
 	else
-
-		if ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ]; then
+		if [ "$ispomgood" = "GOOD" ] && ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ]; then
 			if ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ]; then
 			#get binary jar from mavencentral as a last resort
 
