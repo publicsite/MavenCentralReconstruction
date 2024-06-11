@@ -459,7 +459,7 @@ echo $@
 						elif [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
 							echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 						fi
-						pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}g" "${1}" "${2}" "${3}"
+						pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" "${1}" "${2}" "${3}"
 
 					else
 						echo "UH OH, NO POM."

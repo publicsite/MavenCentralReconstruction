@@ -8,9 +8,18 @@ See LICENCE.TXT for details.
 
 __________________
 
-To get dependencies ...
+#To get dependencies ...
 
-sudo apt-get install git default-jdk procyon-decompiler java-wrappers pexec
+sudo apt-get install git default-jdk procyon-decompiler java-wrappers pexec build-essential
+
+#to set up
+rm getMethodsFromSources
+gcc getMethodsFromSources.c -o getMethodsFromSources
+rm licenses.json
+./getLicencesJSON.sh
+
+#Edit the forcepomgood variable in sourceGetter*.sh if you want to only download software with known
+fsf &| osi licences. (Note that unfortunately much software doesn't list licence in pom.)
 __________________
 
 To use ...
