@@ -3,7 +3,7 @@ theXML="$(cat "$1" | sed 's#\r##g' | sed 's#[\t]##g' | tr -d "\n")"
 theXMLnoBuild="$(printf "%s" "${theXML}" | sed "s#<build>.*</build>##g")"
 licencestring="$(printf "%s" "$theXMLnoBuild" | grep -o '<license>.*</license>')"
 if [ "$licencestring" = "" ]; then
-	echo "NO"
+	echo "NOTSPECIFIED"
 	exit
 fi
 for alicence in "$licencestring"; do

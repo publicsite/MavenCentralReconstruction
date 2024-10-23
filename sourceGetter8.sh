@@ -2,7 +2,10 @@
 #Copyright (c) J05HYYY
 #Licence: https://www.gnu.org/licenses/gpl-3.0.txt
 
-forcepomgood="FORCE" #change to "LIBREONLY" to switch to only libre software
+#set to "FORCE" to force software that is _listed_ as open source
+#set to "LENIENT" to set to software that is listed as open source or unspecified licence
+#set to "ANY" to set to any type of software, proprietary or other
+forcepomgood="LENIENT"
 
 usage(){
 	printf "./sourceGetter7.sh <groupId> <artifactId> <version>\n\nTry and recursively download ALL source dependencies, and their dependencies ... for a package on Maven Central.\n\n"
@@ -459,7 +462,7 @@ echo $@
 						elif [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
 							echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 						fi
-						pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" "${1}" "${2}" "${3}"
+						pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}g" "${1}" "${2}" "${3}"
 
 					else
 						echo "UH OH, NO POM."
@@ -656,6 +659,10 @@ echo $@
 				if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ] || ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ]; then
 					cat "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle" | sed -n '/^\/\*.*\*\//!p' | sed -n '/ \/\/.*/!p' | sed 's|/\*|\n&|g;s|*/|&\n|g' | sed '/\/\*/,/*\//d' > "sources/structure/${groupId}/${artifactId}/${version}/build.gradle"
 				fi
+			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle.kts" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle.kts" ]; then
+				if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ] || ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ]; then
+					cat "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle.kts" | sed -n '/^\/\*.*\*\//!p' | sed -n '/ \/\/.*/!p' | sed 's|/\*|\n&|g;s|*/|&\n|g' | sed '/\/\*/,/*\//d' > "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts"
+				fi
 			fi
 
 			if [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ]; then
@@ -664,6 +671,14 @@ echo $@
 				thispwd="$PWD"
 				cd "sources/structure/${groupId}/${artifactId}/${version}"
 				$thispwd/gradle2pom.sh "${groupId}" "${artifactId}" "${version}"
+				mv pom.xml ${artifactId}-${version}.pom
+				cd "$thispwd"
+			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ]; then
+
+				#if there is a build.gradle.kts, use kts2pom.sh to create a pom
+				thispwd="$PWD"
+				cd "sources/structure/${groupId}/${artifactId}/${version}"
+				$thispwd/kts2pom.sh "${groupId}" "${artifactId}" "${version}"
 				mv pom.xml ${artifactId}-${version}.pom
 				cd "$thispwd"
 			else
@@ -685,7 +700,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 
 							#if the pom doesn't contain licence information, get maven-metadata.xml and check that
 
-							if [ "$ispomgood" = "NO" ]; then
+							if [ "$ispomgood" = "NOTSPECIFIED" ]; then
  								if [ -f "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" ]; then
 									if [ "$(du "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" | cut -c 1-1)" = "0" ]; then
 										rm sources/structure/${groupId}/${artifactId}/maven-metadata.xml
@@ -705,6 +720,11 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 								fi
 
 								ispomgood="$(./checkLicencePom.sh "sources/structure/${groupId}/${artifactId}/maven-metadata.xml")"
+							fi
+
+							#if lenient is set, assume software where licence is not listed in pom is open source.
+							if [ "$forcepomgood" = "LENIENT" ] && [ "$ispomgood" = "NOTSPECIFIED" ]; then
+								ispomgood="GOOD"
 							fi
 
 							echo "${groupId}/${artifactId}/${version}	${ispomgood}" >> sources/structure/${groupId}/${artifactId}/${version}/licences.txt
