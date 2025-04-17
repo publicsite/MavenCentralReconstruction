@@ -402,6 +402,7 @@ echo $@
 
 							if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
 								cp -a "$subjarpom" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom
+								./processProperties.sh "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom"
 							fi
 
 							if [ -f "$subjar" ]; then
@@ -447,6 +448,7 @@ echo $@
 
 							if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
 								cp -a "$subjarpom" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom
+								./processProperties.sh "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom"
 							fi
 
 							if [ -f "$subjar" ]; then
@@ -672,6 +674,7 @@ echo $@
 				cd "sources/structure/${groupId}/${artifactId}/${version}"
 				$thispwd/gradle2pom.sh "${groupId}" "${artifactId}" "${version}"
 				mv pom.xml ${artifactId}-${version}.pom
+				./processProperties.sh "${artifactId}-${version}.pom"
 				cd "$thispwd"
 			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ]; then
 
@@ -680,6 +683,7 @@ echo $@
 				cd "sources/structure/${groupId}/${artifactId}/${version}"
 				$thispwd/kts2pom.sh "${groupId}" "${artifactId}" "${version}"
 				mv pom.xml ${artifactId}-${version}.pom
+				./processProperties.sh "${artifactId}-${version}.pom"
 				cd "$thispwd"
 			else
 
@@ -691,6 +695,9 @@ IFS="
 echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.pom"
 						wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.pom" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom
 						if [ "$?" = 0 ]; then
+
+							./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
+
 							#check licence information
 							if [ "$forcepomgood" = "FORCE" ]; then
 								ispomgood="GOOD"
@@ -1157,6 +1164,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 						if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" ]; then
 							if [ -f "$(dirname "${submodule}")/pom.xml" ]; then
 								cp -a "$(dirname "${submodule}")/pom.xml" "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom"
+								./processProperties.sh "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom"
 							fi
 						fi
 
@@ -1187,6 +1195,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 						if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom" ]; then
 							if [ -f "$(dirname "${submodule}")/pom.xml" ]; then
 								cp -a "$(dirname "${submodule}")/pom.xml" "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom"
+								./processProperties.sh "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom"
 							fi
 						fi
 
