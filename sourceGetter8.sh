@@ -744,7 +744,11 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 				done
 				IFS=$old_ifs
 			fi
+		elif [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom.orig" ]; then
+			./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
 		fi
+	elif [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom.orig" ]; then
+		./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
 	fi
 
 #	if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
