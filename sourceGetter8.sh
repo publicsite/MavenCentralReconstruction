@@ -8,8 +8,8 @@
 forcepomgood="LENIENT"
 
 usage(){
-	printf "./sourceGetter7.sh <groupId> <artifactId> <version>\n\nTry and recursively download ALL source dependencies, and their dependencies ... for a package on Maven Central.\n\n"
-	printf "sourceGetter7 requires git and subversion \n\nIf it can't find a git or subversion repository for a package, it will download the sources.jar, which is unfortunately usually incomplete\n\n"
+	printf "./sourceGetter8.sh <groupId> <artifactId> <version>\n\nTry and recursively download ALL source dependencies, and their dependencies ... for a package on Maven Central.\n\n"
+	printf "sourceGetter8 requires git and subversion \n\nIf it can't find a git or subversion repository for a package, it will download the sources.jar, which is unfortunately usually incomplete\n\n"
 	printf "The idea of this program is to try and rescue, (yes ... rescue) some software [but in practice] probably that's easier said than done.\n\n"
 }
 
@@ -271,7 +271,7 @@ echo "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata
 				if [ "$(grep "^${1}/${2}/${version}$" sources/catalogue.txt )" = "" ]; then
 #					printf "FOUND DEPENDENCY: %s %s %s\n" "${1}" "${2}" "${version}"
 					printf "${1}/${2}/${version}\n" >> sources/catalogue.txt
-					./sourceGetter7.sh "${1}" "${2}" "${version}" "${4}" "${5}" "${6}" "1"
+					./sourceGetter8.sh "${1}" "${2}" "${version}" "${4}" "${5}" "${6}" "1"
 				fi
 			fi
 		else
@@ -288,7 +288,7 @@ echo "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata
 				if [ "$(grep "^${1}/${2}/${3}$" sources/catalogue.txt )" = "" ]; then
 #					printf "FOUND DEPENDENCY: %s %s %s\n" "${1}" "${2}" "${3}"
 					printf "${1}/${2}/${3}\n" >> sources/catalogue.txt
-					./sourceGetter7.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "1"
+					./sourceGetter8.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "1"
 				fi
 			fi
 		fi
@@ -333,6 +333,9 @@ echo $@
 					unzip "$subjar" -d tempExtract
 
 					subjarpom="$(find tempExtract -name pom.xml | head -n 1)"
+
+					./processProperties.sh "$subjarpom" "$subjarpom"
+
 
 					if [ -f "$subjarpom" ]; then
 						theXMLTwo="$(cat $subjarpom | sed 's#\r##g' | sed 's#[ \t]##g' | tr -d "\n")"
@@ -402,13 +405,12 @@ echo $@
 
 							if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
 								cp -a "$subjarpom" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom
-								./processProperties.sh "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom"
 							fi
 
 							if [ -f "$subjar" ]; then
-								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ]; then
+								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
 									rm -f "$subjar"
-								elif  [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ]; then
+								elif  [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
 									rm -f "$subjar"
 								fi
 							fi
@@ -448,11 +450,10 @@ echo $@
 
 							if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
 								cp -a "$subjarpom" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom
-								./processProperties.sh "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom"
 							fi
 
 							if [ -f "$subjar" ]; then
-								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ]; then
+								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ] ; then
 									rm -f "$subjar"
 								fi
 							fi
@@ -464,7 +465,7 @@ echo $@
 						elif [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
 							echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 						fi
-						pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}g" "${1}" "${2}" "${3}"
+						pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" "${1}" "${2}" "${3}"
 
 					else
 						echo "UH OH, NO POM."
@@ -544,9 +545,9 @@ echo $@
 								fi
 
 								if [ -f "$subjar" ]; then
-									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ]; then
+									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
 										rm -f "$subjar"
-									elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ]; then
+									elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
 										rm -f "$subjar"
 									fi
 								fi
@@ -580,7 +581,7 @@ echo $@
 								fi
 
 								if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
-									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -c 1-1)" = "0" ]; then
+									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -c 1-1)" = "0" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
 										rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
 									fi
 								fi
@@ -598,7 +599,7 @@ echo $@
 								fi
 
 								if [ -f "$subjar" ]; then
-									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ]; then
+									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
 										rm -f "$subjar"
 									fi
 								fi
@@ -631,7 +632,7 @@ echo $@
 			fi 
 			cat "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" | while read adependency; do
 				if [ "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" != "unknown.group.id" ]; then
-				./sourceGetter7.sh "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" "$(printf "%s" "${adependency}" | cut -d '/' -f 2)" "$(printf "%s" "${adependency}" | cut -d '/' -f 3)" "${groupId}" "${artifactId}" "${version}"
+				./sourceGetter8.sh "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" "$(printf "%s" "${adependency}" | cut -d '/' -f 2)" "$(printf "%s" "${adependency}" | cut -d '/' -f 3)" "${groupId}" "${artifactId}" "${version}"
 				fi
 			done
 		fi
@@ -674,7 +675,7 @@ echo $@
 				cd "sources/structure/${groupId}/${artifactId}/${version}"
 				$thispwd/gradle2pom.sh "${groupId}" "${artifactId}" "${version}"
 				mv pom.xml ${artifactId}-${version}.pom
-				./processProperties.sh "${artifactId}-${version}.pom"
+				./processProperties.sh "${artifactId}-${version}.pom" "${artifactId}-${version}.pom"
 				cd "$thispwd"
 			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ]; then
 
@@ -683,7 +684,7 @@ echo $@
 				cd "sources/structure/${groupId}/${artifactId}/${version}"
 				$thispwd/kts2pom.sh "${groupId}" "${artifactId}" "${version}"
 				mv pom.xml ${artifactId}-${version}.pom
-				./processProperties.sh "${artifactId}-${version}.pom"
+				./processProperties.sh "${artifactId}-${version}.pom" "${artifactId}-${version}.pom"
 				cd "$thispwd"
 			else
 
@@ -696,7 +697,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 						wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/${version}/${artifactId}-${version}.pom" -O sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom
 						if [ "$?" = 0 ]; then
 
-							./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
+							./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
 
 							#check licence information
 							if [ "$forcepomgood" = "FORCE" ]; then
@@ -745,10 +746,10 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 				IFS=$old_ifs
 			fi
 		elif [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom.orig" ]; then
-			./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
+			./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
 		fi
 	elif [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom.orig" ]; then
-		./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
+		./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
 	fi
 
 #	if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
@@ -850,8 +851,6 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 								sourcesJarDownloadFailed=0
 							fi 
 						fi
-					else
-						rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar"
 					fi
 				fi
 			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar" ]; then
@@ -866,104 +865,105 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 								sourcesJarDownloadFailed=0
 							fi 
 						fi
-					else
-						rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar"
 					fi
 				fi
 			fi
 
-			if [ "$sourcesJarDownloadFailed" = 1 ]; then
+			if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar" ] && [ ! -L "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar" ]; then
+
+				if [ "$sourcesJarDownloadFailed" = 1 ]; then
 
 
-				if [ "$(printf "%s\n" "$connection" | cut -c 1-8)" = "scm:git:" ]; then
-					if [ "$(printf "${connection}" | cut -c 1-12)" = "scm:git:git@" ]; then
-						connection="$(printf "%s" "${connection}" | sed "s#:#/#g" | sed "s#git@#git://#g")"
-					fi
-					#printf "GETTING SOURCES %s FROM GIT\n" "$(printf "%s" "$connection" | cut -c 9-)"
-					cd sources/structure/${groupId}/${artifactId}/${version}
-					if [ "${tag}" = "HEAD" ] || [ "${tag}" = "" ]; then
+					if [ "$(printf "%s\n" "$connection" | cut -c 1-8)" = "scm:git:" ]; then
+						if [ "$(printf "${connection}" | cut -c 1-12)" = "scm:git:git@" ]; then
+							connection="$(printf "%s" "${connection}" | sed "s#:#/#g" | sed "s#git@#git://#g")"
+						fi
+						#printf "GETTING SOURCES %s FROM GIT\n" "$(printf "%s" "$connection" | cut -c 9-)"
+						cd sources/structure/${groupId}/${artifactId}/${version}
+						if [ "${tag}" = "HEAD" ] || [ "${tag}" = "" ]; then
 
-						scmurl="$(printf "%s" "$connection" | cut -c 9- | sed "s#git://github.com#https://github.com#g")"
+							scmurl="$(printf "%s" "$connection" | cut -c 9- | sed "s#git://github.com#https://github.com#g")"
 	
-						scmdir="$(printf "%s\n" "${scmurl}" | sed "s#//##g")"
+							scmdir="$(printf "%s\n" "${scmurl}" | sed "s#//##g")"
 
-						if ! [ -d "extractedSources" ]; then
-							mkdir -p "extractedSources"
+							if ! [ -d "extractedSources" ]; then
+								mkdir -p "extractedSources"
 echo "${scmurl}"
-							git clone "${scmurl}" "extractedSources"
-							if [ "$?" != 0 ]; then
-								gitfailed=1
+								git clone "${scmurl}" "extractedSources"
+								if [ "$?" != 0 ]; then
+									gitfailed=1
+								fi
 							fi
-						fi
-					else 
+						else 
 
-						scmurl="$(printf "%s" "$connection" | cut -c 9- | sed "s#git://github.com#https://github.com#g")"
+							scmurl="$(printf "%s" "$connection" | cut -c 9- | sed "s#git://github.com#https://github.com#g")"
 
-						scmdir="$(printf "%s\n" "${scmurl}" | sed "s#//##g")"
-	
-						if ! [ -d "extractedSources" ]; then
-							mkdir -p "extractedSources"
-echo "${scmurl} -b ${tag}"
-							git clone -b "${tag}" "${scmurl}" "extractedSources"
-							if [ "$?" != 0 ]; then
-								gitfailed=1
-							fi
-						fi
-					fi
-					cd ../../../../../
-				elif [ "$(printf "%s\n" "$connection" | cut -c 1-8)" = "scm:svn" ]; then
-					#printf "GETTING SOURCES %s FROM SVN\n" "$(printf "%s" "$connection" | cut -c 9-)"
-					cd sources/structure/${groupId}/${artifactId}/${version}
-		
-					scmurl="$(printf "%s\n" "$connection" | cut -c 9- | sed "s#git://github.com#https://github.com#g")"
-		
-					scmdir="$(printf "%s\n" "${scmurl}" | sed "s#//##g")"
-	
-					if ! [ -d "extractedSources" ]; then
-						mkdir -p "extractedSources"
-						svn co -r "${tag}" "${scmurl}" "extractedSources"
-						if [ "$?" != 0 ]; then
-								gitfailed=1
-						fi
-					fi
-	
-					cd ../../../../../
-				elif [ "$(printf "%s\n" "$connection" | cut -c 1-4)" = "git@" ]; then
-					connection="$(printf "%s" "${connection}" | sed "s#:#/#g" | sed "s#git@#git://#g")"
-					#printf "GETTING SOURCES %s FROM GIT\n" "$(printf "%s" "$connection")"
-					cd sources/structure/${groupId}/${artifactId}/${version}
-					if [ "${tag}" = "HEAD" ] || [ "${tag}" = "" ]; then
-							scmurl="$(printf "%s" "$connection" | sed "s#git://github.com#https://github.com#g")"
-		
-						scmdir="$(printf "%s\n" "${scmurl}" | sed "s#//##g")"
+							scmdir="$(printf "%s\n" "${scmurl}" | sed "s#//##g")"
 	
 							if ! [ -d "extractedSources" ]; then
-						mkdir -p "extractedSources"
-echo "${scmurl} -b HEAD"
-							git clone -b "HEAD" "${scmurl}" "extractedSources"
-							if [ "$?" != 0 ]; then
-								gitfailed=1
+								mkdir -p "extractedSources"
+echo "${scmurl} -b ${tag}"
+								git clone -b "${tag}" "${scmurl}" "extractedSources"
+								if [ "$?" != 0 ]; then
+									gitfailed=1
+								fi
 							fi
 						fi
-					else 
+						cd ../../../../../
+					elif [ "$(printf "%s\n" "$connection" | cut -c 1-8)" = "scm:svn" ]; then
+						#printf "GETTING SOURCES %s FROM SVN\n" "$(printf "%s" "$connection" | cut -c 9-)"
+						cd sources/structure/${groupId}/${artifactId}/${version}
 		
-						scmurl="$(printf "%s" "$connection" | sed "s#git://github.com#https://github.com#g")"
-	
+						scmurl="$(printf "%s\n" "$connection" | cut -c 9- | sed "s#git://github.com#https://github.com#g")"
+		
 						scmdir="$(printf "%s\n" "${scmurl}" | sed "s#//##g")"
 	
 						if ! [ -d "extractedSources" ]; then
 							mkdir -p "extractedSources"
-echo "${scmurl} -b HEAD"
-							git clone -b "${tag}" "${scmurl}" "extractedSources"
+							svn co -r "${tag}" "${scmurl}" "extractedSources"
 							if [ "$?" != 0 ]; then
-								gitfailed=1
+									gitfailed=1
 							fi
 						fi
 	
+						cd ../../../../../
+					elif [ "$(printf "%s\n" "$connection" | cut -c 1-4)" = "git@" ]; then
+						connection="$(printf "%s" "${connection}" | sed "s#:#/#g" | sed "s#git@#git://#g")"
+						#printf "GETTING SOURCES %s FROM GIT\n" "$(printf "%s" "$connection")"
+						cd sources/structure/${groupId}/${artifactId}/${version}
+						if [ "${tag}" = "HEAD" ] || [ "${tag}" = "" ]; then
+								scmurl="$(printf "%s" "$connection" | sed "s#git://github.com#https://github.com#g")"
+		
+							scmdir="$(printf "%s\n" "${scmurl}" | sed "s#//##g")"
+	
+								if ! [ -d "extractedSources" ]; then
+							mkdir -p "extractedSources"
+echo "${scmurl} -b HEAD"
+								git clone -b "HEAD" "${scmurl}" "extractedSources"
+								if [ "$?" != 0 ]; then
+									gitfailed=1
+								fi
+							fi
+						else 
+		
+							scmurl="$(printf "%s" "$connection" | sed "s#git://github.com#https://github.com#g")"
+	
+							scmdir="$(printf "%s\n" "${scmurl}" | sed "s#//##g")"
+	
+							if ! [ -d "extractedSources" ]; then
+								mkdir -p "extractedSources"
+echo "${scmurl} -b HEAD"
+								git clone -b "${tag}" "${scmurl}" "extractedSources"
+								if [ "$?" != 0 ]; then
+									gitfailed=1
+								fi
+							fi
+	
+						fi
+						cd ../../../../../
+					else
+						gitfailed=1
 					fi
-					cd ../../../../../
-				else
-					gitfailed=1
 				fi
 			fi
 
@@ -1034,7 +1034,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 				#try a different mirror
 				if [ "$(echo $theRepos | wc -l)" -gt "$sourceNumber" ]; then
 					sourceNumber="$(expr $sourceNumber + 1)"
-					./sourceGetter7.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
+					./sourceGetter8.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
 				fi
 			else
 				if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/pom.xml" ]; then
@@ -1121,7 +1121,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 			#try a different mirror
 			if [ "$(echo $theRepos | wc -l)" -gt "$sourceNumber" ]; then
 				sourceNumber="$(expr $sourceNumber + 1)"
-				./sourceGetter7.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
+				./sourceGetter8.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
 			fi
 		fi
 
@@ -1139,6 +1139,8 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 				find "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" -mindepth 2 -name pom.xml -printf "%d %p\n" | sort -nr | cut -d ' ' -f 2- | while read submodule; do
 
 					if [ -f "$submodule" ]; then
+						#we process properties of the submodule using the parent pom, so that it inherits variables
+						./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "$submodule"
 						theXML="$(cat $submodule | sed 's#\r##g' | sed 's#[ \t]##g' | tr -d "\n")"
 					fi
 
@@ -1166,9 +1168,9 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 						#printf "%s\n" "${groupId}/${testArtifactId}/${version}" >> sources/structure/${1}/${2}/${3}/dependencies.txt
 
 						if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" ]; then
-							if [ -f "$(dirname "${submodule}")/pom.xml" ]; then
-								cp -a "$(dirname "${submodule}")/pom.xml" "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom"
-								./processProperties.sh "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom"
+							if [ -f "${submodule}" ]; then
+								cp -a "${submodule}" "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom"
+								./processProperties.sh "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom" "sources/structure/${groupId}/${testArtifactId}/${version}/${testArtifactId}-${version}.pom"
 							fi
 						fi
 
@@ -1193,13 +1195,12 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 
 					else
 						mkdir -p sources/structure/${groupId}/${testArtifactId}/${testVersion}
-
 						#printf "%s\n" "${groupId}/${testArtifactId}/${testVersion}" >> sources/structure/${1}/${2}/${3}/dependencies.txt
 
 						if ! [ -L "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom" ]; then
-							if [ -f "$(dirname "${submodule}")/pom.xml" ]; then
-								cp -a "$(dirname "${submodule}")/pom.xml" "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom"
-								./processProperties.sh "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom"
+							if [ -f "${submodule}" ]; then
+								cp -a "${submodule}" "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom"
+								./processProperties.sh "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom" "sources/structure/${groupId}/${testArtifactId}/${testVersion}/${testArtifactId}-${testVersion}.pom"
 							fi
 						fi
 
@@ -1232,7 +1233,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 	#if not found, try a different mirror
 	elif [ "$(echo $theRepos | wc -l)" -gt "$sourceNumber" ] && [ "$4" != "" ]; then
 		sourceNumber="$(expr $sourceNumber + 1)"
-		./sourceGetter7.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
+		./sourceGetter8.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "${sourceNumber}"
 
 	#if not found and no mirrors left
 	else
