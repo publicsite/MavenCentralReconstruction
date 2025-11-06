@@ -1,5 +1,8 @@
 #!/bin/sh
 
+OLD_UMASK="$(umask)"
+umask 0022
+
 usage(){
 	printf "./getSources.sh <groupId> <artifactId> <version>\n\nTry and recursively download ALL source dependencies, and their dependencies ... for a package on Maven Central.\n\n"
 	printf "getSources.sh requires git and subversion \n\nIf it can't find a git or subversion repository for a package, it will download the sources.jar, which is unfortunately usually incomplete\n\n"
@@ -18,3 +21,5 @@ fi
 touch "sources/catalogue.txt"
 
 ./sourceGetter8.sh "$1" "$2" "$3"
+
+umask "${OLD_UMASK}"
