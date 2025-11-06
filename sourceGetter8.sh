@@ -7,6 +7,9 @@
 #set to "ANY" to set to any type of software, proprietary or other
 forcepomgood="LENIENT"
 
+OLD_UMASK="$(umask)"
+umask 0022
+
 usage(){
 	printf "./sourceGetter8.sh <groupId> <artifactId> <version>\n\nTry and recursively download ALL source dependencies, and their dependencies ... for a package on Maven Central.\n\n"
 	printf "sourceGetter8 requires git and subversion \n\nIf it can't find a git or subversion repository for a package, it will download the sources.jar, which is unfortunately usually incomplete\n\n"
@@ -1312,5 +1315,6 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 		fi
 	fi
 
+umask "${OLD_UMASK}"
 
 
