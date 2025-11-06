@@ -1,5 +1,8 @@
 #!/bin/sh
 
+OLD_UMASK="$(umask)"
+umask 0022
+
 thepwd="$PWD"
 
 				apackage="$(echo "$1" | cut -d '/' -f 3-)"
@@ -70,3 +73,6 @@ thepwd="$PWD"
 						fi
 					done
 				fi
+
+		umask "${OLD_UMASK}"
+		
