@@ -1,4 +1,8 @@
 #!/bin/sh
+
+OLD_UMASK="$(umask)"
+umask 0022
+
 echo "$2"
 
 thepwd="$PWD"
@@ -62,3 +66,5 @@ thepwd="$PWD"
 				fi
 			done
 		fi
+
+umask "${OLD_UMASK}"
