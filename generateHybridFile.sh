@@ -4,6 +4,9 @@
 #arg2 java source file (non-working)
 #arg3 java binary source file (working; this can be decompiled from a .class file)
 
+OLD_UMASK="$(umask)"
+umask 0022
+
 printIfNumeric(){
 read isnumber
 case $isnumber in
@@ -185,3 +188,5 @@ ${ranges}"
 
 	fi
 done
+
+umask "${OLD_UMASK}"
