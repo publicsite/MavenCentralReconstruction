@@ -1,5 +1,8 @@
 #!/bin/sh
 
+OLD_UMASK="$(umask)"
+umask 0022
+
 J=2
 
 thepwd="$PWD"
@@ -115,3 +118,5 @@ while [ "$goagainthree" = "1" ]; do
 		goagainfour=1
 	fi
 done
+
+umask "${OLD_UMASK}"
