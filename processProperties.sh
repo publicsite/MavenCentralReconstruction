@@ -1,4 +1,8 @@
 #!/bin/sh
+
+OLD_UMASK="$(umask)"
+umask 0022
+
 if [ ! -f "$1.bak" ]; then
 	cp -a "$1" "$1.orig"
 fi
@@ -34,3 +38,6 @@ for i in $(seq $count); do
 	sed -i "s#\${${varname}}#${varvalue}#g" "$2"
 	listOfProperties="$(echo "$listOfProperties" | sed "s#\${${varname}}#${varvalue}#g")"
 done
+
+umask "${OLD_UMASK}"
+
