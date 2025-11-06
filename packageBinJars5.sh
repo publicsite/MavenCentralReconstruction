@@ -1,5 +1,8 @@
 #!/bin/sh
 
+OLD_UMASK="$(umask)"
+umask 0022
+
 if [ -d workingdir ]; then
 rm -rf workingdir
 fi
@@ -160,3 +163,5 @@ rm -rf workingdir/*
 done
 
 rm -rf workingdir
+
+umask "${OLD_UMASK}"
