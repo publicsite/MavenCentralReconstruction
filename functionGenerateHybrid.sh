@@ -1,5 +1,8 @@
 #!/bin/sh
 
+OLD_UMASK="$(umask)"
+umask 0022
+
 isNumeric(){
 case $1 in
     ''|*[!0-9]*) echo bad ;;
@@ -148,3 +151,5 @@ thepwd="$PWD"
 					fi
 				done
 			fi
+
+umask "${OLD_UMASK}"
