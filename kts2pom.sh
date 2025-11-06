@@ -6,6 +6,9 @@
 #arg5: artifactId of parent
 #arg6: version of parent
 
+OLD_UMASK="$(umask)"
+umask 0022
+
 recurse(){
 toappend="$1"
 find "$2" -maxdepth 1 -mindepth 1 -type d | while read line; do
@@ -245,3 +248,5 @@ export IFS='
 
 	printf "</project>\n" >> pom.xml
 fi
+
+umask "${OLD_UMASK}"
