@@ -9,7 +9,10 @@ thepwd="$PWD"
 
 goagainthree=1
 
+masteroc="-1"
+
 while [ "$goagainthree" = "1" ]; do
+
 	goagainthree=0
 
 	goagaintwo=1
@@ -19,7 +22,14 @@ while [ "$goagainthree" = "1" ]; do
 
 		#cycle one is for source-only stuff
 		if [ -d buildlog ]; then
-			oldcount="$(find buildlog/ -mindepth 4 -maxdepth 4 -name "fromSource" -exec find {} -name "*.failed" \; | wc -l)"
+			oldcount="$(find buildlog/ -mindepth 4 -maxdepth 4 -exec find {} -name "*.failed" \; | wc -l)"
+			if [ "$oldcount" != "$masteroc" ]; then
+				#set master count if it has changed
+				masteroc=$oldcount
+			else
+				#exit loop if master count has not changed
+				exit
+			fi
 		else
 			oldcount="0"
 		fi
@@ -109,13 +119,22 @@ while [ "$goagainthree" = "1" ]; do
 
 	newcount="$(find buildlog/ -mindepth 4 -maxdepth 4 -name "decompiledOnly" -exec find {} -name "*.failed" \; | wc -l)"
 
-	if [ "$oldcount" = "$newcount" ]; then
-		goagainone=0
-		goagaintwo=0
-		goagainthree=0
-	else
+	if [ "$masteroc" -gt "0" ]; then
+		#make sure to go again if total count has changed
 		oldcount="$newcount"
+		goagainone=1
+		goagaintwo=1
+		goagainthree=1
 		goagainfour=1
+	else
+		if [ "$oldcount" = "$newcount" ]; then
+			goagainone=0
+			goagaintwo=0
+			goagainthree=0
+		else
+			oldcount="$newcount"
+			goagainfour=1
+		fi
 	fi
 done
 
