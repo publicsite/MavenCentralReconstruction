@@ -112,6 +112,10 @@ export IFS='
 
 	modulesString=""
 
+	if [ -d "extractedSources" ]; then
+		cd extractedSources
+	fi
+
 	if [ -f settings.gradle ]; then
 		
 export IFS='
@@ -123,12 +127,39 @@ export IFS='
 			if [ -d "$submodule" ]; then
 				modulesString="${modulesString}\t\t<module>${submodule}</module>\n"
 				cd "$submodule"
-				${thepwd}/convert.sh "$groupId" "${submodule}" "$version" "$groupId" "$artifactId" "$version" #"$(printf "%s" "${repositoriestoprint}" | tr '\n' '^')"
+				if [ ! -f "${artifactId}-${version}.pom" ] && [ ! -f "pom.xml" ] && [ ! -f "build.gradle.kts" ] && [ -f "build.gradle" ]; then
+					cat "build.gradle" | sed -n '/^\/\*.*\*\//!p' | sed -n '/ \/\/.*/!p' | sed 's|/\*|\n&|g;s|*/|&\n|g' | sed '/\/\*/,/*\//d' > "build.gradle.toprocess"
+					mv build.gradle build.gradle.bak
+					mv build.gradle.toprocess build.gradle
+
+					#if there is a build.gradle, use gradle2pom.sh to create a pom
+
+					$(dirname $(realpath "$0"))/gradle2pom.sh "${groupId}" "${submodule}" "${version}"
+					$(dirname $(realpath "$0"))/processProperties.sh "pom.xml" "pom.xml"
+
+					rm build.gradle
+					mv build.gradle.bak build.gradle
+
+				elif [ ! -f "${artifactId}-${version}.pom" ] && [ ! -f "pom.xml" ] && [ -f "build.gradle.kts" ]; then
+					cat "build.gradle.kts" | sed -n '/^\/\*.*\*\//!p' | sed -n '/ \/\/.*/!p' | sed 's|/\*|\n&|g;s|*/|&\n|g' | sed '/\/\*/,/*\//d' > "build.gradle.kts.toprocess"
+					mv build.gradle.kts build.gradle.kts.bak
+					mv build.gradle.kts.toprocess build.gradle.kts
+
+					#if there is a build.gradle.kts, use kts2pom.sh to create a pom
+					$(dirname $(realpath "$0"))/kts2pom.sh "${groupId}" "${submodule}" "${version}"
+					$(dirname $(realpath "$0"))./processProperties.sh "pom.xml" "pom.xml"
+					
+					rm build.gradle.kts
+					mv build.gradle.kts.bak build.gradle.kts
+
+				fi
 				cd "$oldpwd"
 			fi
 		done
 		export IFS="$OLDIFS"
 	fi
+
+	cd "$thepwd"
 
 	if [ "$modulesString" != "" ]; then
 		printf "\t<modules>\n" >> pom.xml
