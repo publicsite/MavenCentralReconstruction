@@ -313,197 +313,144 @@ echo $@
 
 	processDeps="no"
 
+		#convert build.gradle or build.gradle.kts if needs be
+		if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/pom.xml" ] && [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/${artifactId}-${version}.pom" ]; then
+
+			if [ -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle" ]; then
+				if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ] || ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ]; then
+					cat "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle" | sed -n '/^\/\*.*\*\//!p' | sed -n '/ \/\/.*/!p' | sed 's|/\*|\n&|g;s|*/|&\n|g' | sed '/\/\*/,/*\//d' > "sources/structure/${groupId}/${artifactId}/${version}/build.gradle"
+				fi
+			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle.kts" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle.kts" ]; then
+				if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ] || ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ]; then
+					cat "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle.kts" | sed -n '/^\/\*.*\*\//!p' | sed -n '/ \/\/.*/!p' | sed 's|/\*|\n&|g;s|*/|&\n|g' | sed '/\/\*/,/*\//d' > "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts"
+				fi
+			fi
+
+			if [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ]; then
+
+				#if there is a build.gradle, use gradle2pom.sh to create a pom
+				thispwd="$PWD"
+				cd "sources/structure/${groupId}/${artifactId}/${version}"
+				$thispwd/gradle2pom.sh "${groupId}" "${artifactId}" "${version}"
+				$thispwd/processProperties.sh "pom.xml" "pom.xml"
+				cd "$thispwd"
+			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ]; then
+
+				#if there is a build.gradle.kts, use kts2pom.sh to create a pom
+				thispwd="$PWD"
+				cd "sources/structure/${groupId}/${artifactId}/${version}"
+				$thispwd/kts2pom.sh "${groupId}" "${artifactId}" "${version}"
+				$thispwd/processProperties.sh "pom.xml" "pom.xml"
+				cd "$thispwd"
+			fi
+		fi
+
 		if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
 
 			#if dependencies file does not exist ...
 
 			#search the directory for jars and process them
 			if [ -d "sources/structure/${groupId}/${artifactId}/${version}" ]; then
-				find "sources/structure/${groupId}/${artifactId}/${version}" -name "*.jar" | while read subjar; do
 
-					jarType=""
-					if [ "$(echo "$subjar" | grep "sources.jar$")" != "" ] || [ "$(echo "$subjar" | grep "source.jar$")" != "" ]; then
-						jarType="source"
-					else
-						jarType="bin"
-					fi
+				#find all jars
+				alistofsubjars="$(find "sources/structure/${groupId}/${artifactId}/${version}" -name "*.jar")"
 
-					if [ -d tempExtract ]; then
-						rm -rf tempExtract
-					fi
+				#if no jars are found
+				if [ "$alistofsubjars" = "" ]; then
+					#if we have an extractedSources dir
+					if [ -d "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ]; then
+						#if we have a pom file
+						if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
+							theXMLTwo="$(cat "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" | sed 's#\r##g' | sed 's#[ \t]##g' | tr -d "\n")"
 
-					mkdir tempExtract
-					unzip "$subjar" -d tempExtract
+							theXMLTwonoParent="$(printf "%s" "${theXMLTwo}" | sed "s#<parent>.*</parent>##g" | sed "s#<build>.*</build>##g" | sed "s#<dependencies>.*</dependencies>##g" | sed "s#<reporting>.*</reporting>##g")"
+							theXMLTwonoBuild="$(printf "%s" "${theXMLTwo}" | sed "s#<build>.*</build>##g")"
+							groupIdTwo="$(printf "%s" "${theXMLTwonoBuild}" | sed "s#<dependencies>.*</dependencies>##g" | grep -o '<groupId>.*</groupId>' | cut -d '>' -f 2 | cut -d '<' -f 1 )"
 
-					subjarpom="$(find tempExtract -name pom.xml | head -n 1)"
+							if [ "${groupIdTwo}" = "" ]; then
+								groupIdTwo="${groupId}"
+							fi
 
-					./processProperties.sh "$subjarpom" "$subjarpom"
-
-
-					if [ -f "$subjarpom" ]; then
-						theXMLTwo="$(cat $subjarpom | sed 's#\r##g' | sed 's#[ \t]##g' | tr -d "\n")"
-
-						theXMLTwonoParent="$(printf "%s" "${theXMLTwo}" | sed "s#<parent>.*</parent>##g" | sed "s#<build>.*</build>##g" | sed "s#<dependencies>.*</dependencies>##g" | sed "s#<reporting>.*</reporting>##g")"
-						theXMLTwonoBuild="$(printf "%s" "${theXMLTwo}" | sed "s#<build>.*</build>##g")"
-						groupIdTwo="$(printf "%s" "${theXMLTwonoBuild}" | sed "s#<dependencies>.*</dependencies>##g" | grep -o '<groupId>.*</groupId>' | cut -d '>' -f 2 | cut -d '<' -f 1 )"
-
-						if [ "${groupIdTwo}" = "" ]; then
-							groupIdTwo="${groupId}"
-						fi
-
-						testVersionTwo="$(printf "%s" "${theXMLTwonoParent}" | grep -o '<version>.*</version>'| cut -d '>' -f 2 | cut -d '<' -f 1)"
+							testVersionTwo="$(printf "%s" "${theXMLTwonoParent}" | grep -o '<version>.*</version>'| cut -d '>' -f 2 | cut -d '<' -f 1)"
 		
-						if [ "$(printf "%s\n" "$testVersionTwo" | cut -c 1-2)" = "\${" ]; then
-							theSpecialTwo="$(printf "${testVersionTwo%\}}" | cut -c 3-)"
-							specialTwo="$(printf "%s" "$theXMLTwonoParent" | sed -n "s:.*<${theSpecial}>\(.*\)</${theSpecial}>.*:\1:p")"
-							testVersionTwo="${specialTwo}"
-						fi
-
-						if [ "${testVersionTwo}" = "" ]; then
-							testVersionTwo="$(printf "%s" "${theXMLTwo}" | grep -o '<version>.*</version>'| cut -d '>' -f 2 | cut -d '<' -f 1)"
-						fi
-
-						if [ "${testVersionTwo}" = "" ]; then
-							testVersionTwo="${version}"
-						fi
-
-						testArtifactIdTwo="$(printf "%s" "${theXMLTwonoParent}" | grep -o '<artifactId>.*</artifactId>' | cut -d '>' -f 2 | cut -d '<' -f 1)"
-
-						mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}
-#echo "sources/structure/${groupId}/${testArtifactIdTwo}/${testVersionTwo} <<<<"
-						if [ "$jarType" = "source" ]; then
-							#source jar
-
-							if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
-								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -c 1-1)" = "0" ]; then
-									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar"
-									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
-										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
-									fi
-								elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
-									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar"		
-									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
-										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
-									fi
-								fi
-							elif [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
-								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -c 1-1)" = "0" ]; then
-									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar"
-									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
-										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
-									fi
-								elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
-									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar"
-									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
-										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
-									fi
-								fi
-							fi	
-
-							if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
-								mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar
-							elif [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
-								mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar
+							if [ "$(printf "%s\n" "$testVersionTwo" | cut -c 1-2)" = "\${" ]; then
+								theSpecialTwo="$(printf "${testVersionTwo%\}}" | cut -c 3-)"
+								specialTwo="$(printf "%s" "$theXMLTwonoParent" | sed -n "s:.*<${theSpecial}>\(.*\)</${theSpecial}>.*:\1:p")"
+								testVersionTwo="${specialTwo}"
 							fi
 
-							if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
-								cp -a "$subjarpom" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom
+							if [ "${testVersionTwo}" = "" ]; then
+								testVersionTwo="$(printf "%s" "${theXMLTwo}" | grep -o '<version>.*</version>'| cut -d '>' -f 2 | cut -d '<' -f 1)"
 							fi
 
-							if [ -f "$subjar" ]; then
-								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
-									rm -f "$subjar"
-								elif  [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
-									rm -f "$subjar"
-								fi
+							if [ "${testVersionTwo}" = "" ]; then
+								testVersionTwo="${version}"
 							fi
 
-							mv tempExtract sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources
+							testArtifactIdTwo="$(printf "%s" "${theXMLTwonoParent}" | grep -o '<artifactId>.*</artifactId>' | cut -d '>' -f 2 | cut -d '<' -f 1)"
+
+							pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" "${1}" "${2}" "${3}"
+
+							processDeps="yes"
+
+					fi
+				else
+				#a jar was found
+					#so read each found jar...
+					echo "$alistofsubjars" | while read subjar; do
+
+						jarType=""
+						if [ "$(echo "$subjar" | grep "sources.jar$")" != "" ] || [ "$(echo "$subjar" | grep "source.jar$")" != "" ]; then
+							jarType="source"
 						else
-							#bin jar
-							if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
-								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -c 1-1)" = "0" ]; then
-									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
-									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
-										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon"
-									fi
-									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
-										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR"
-									fi
-								elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
-									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
-									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
-										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon"
-									fi
-									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
-										rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR"
-									fi
-								fi
-							fi
+							jarType="bin"
+						fi
 
-							if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
-								mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar
-							fi
-
-							if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
-								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" | cut -c 1-1)" = "0" ]; then
-									rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom"
-								fi
-							fi
-
-							if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
-								cp -a "$subjarpom" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom
-							fi
-
-							if [ -f "$subjar" ]; then
-								if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ] ; then
-									rm -f "$subjar"
-								fi
-							fi
+						if [ -d tempExtract ]; then
 							rm -rf tempExtract
 						fi
 
-						if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
-							echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
-						elif [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
-							echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
-						fi
-						pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" "${1}" "${2}" "${3}"
+						mkdir tempExtract
+						unzip "$subjar" -d tempExtract
 
-					else
-						echo "UH OH, NO POM."
+						subjarpom="$(find tempExtract -name pom.xml | head -n 1)"
 
-						groupIdTwo="unknown.group.id"
-						testArtifactIdTwo="$(basename "$subjar" | cut -d '_' -f 1)"
-						testVersionTwo="$(basename "$subjar" | cut -d '_' -f 2)"
-						testVersionTwo="${testVersionTwo%.jar}"
-
-						if [ "${testVersionTwo}" = "" ]; then
-							testVersionTwo="${version}"
-						fi
-
-						if [ "${testArtifactIdTwo}" = "" ]; then
-							testArtifactIdTwo="$(basename "$subjar")"
-						fi
-
-						if [ "$(printf "%s" "$testArtifactIdTwo" | grep ".jar$")" != "" ]; then
-							testArtifactIdTwo="${testArtifactIdTwo%.jar}"
-						fi
-
-						if [ "$(printf "%s" "$testArtifactIdTwo" | grep "javadoc$")" = "" ]; then
+						./processProperties.sh "$subjarpom" "$subjarpom"
 
 
-							if [ "$(printf "%s" "$testArtifactIdTwo" | grep "sources$")" != "" ] || [ "$(printf "%s" "$testArtifactIdTwo" | grep "source$")" != "" ]; then
+						if [ -f "$subjarpom" ]; then
+							theXMLTwo="$(cat $subjarpom | sed 's#\r##g' | sed 's#[ \t]##g' | tr -d "\n")"
 
+							theXMLTwonoParent="$(printf "%s" "${theXMLTwo}" | sed "s#<parent>.*</parent>##g" | sed "s#<build>.*</build>##g" | sed "s#<dependencies>.*</dependencies>##g" | sed "s#<reporting>.*</reporting>##g")"
+							theXMLTwonoBuild="$(printf "%s" "${theXMLTwo}" | sed "s#<build>.*</build>##g")"
+							groupIdTwo="$(printf "%s" "${theXMLTwonoBuild}" | sed "s#<dependencies>.*</dependencies>##g" | grep -o '<groupId>.*</groupId>' | cut -d '>' -f 2 | cut -d '<' -f 1 )"
+
+							if [ "${groupIdTwo}" = "" ]; then
+								groupIdTwo="${groupId}"
+							fi
+
+							testVersionTwo="$(printf "%s" "${theXMLTwonoParent}" | grep -o '<version>.*</version>'| cut -d '>' -f 2 | cut -d '<' -f 1)"
+		
+							if [ "$(printf "%s\n" "$testVersionTwo" | cut -c 1-2)" = "\${" ]; then
+								theSpecialTwo="$(printf "${testVersionTwo%\}}" | cut -c 3-)"
+								specialTwo="$(printf "%s" "$theXMLTwonoParent" | sed -n "s:.*<${theSpecial}>\(.*\)</${theSpecial}>.*:\1:p")"
+								testVersionTwo="${specialTwo}"
+							fi
+
+							if [ "${testVersionTwo}" = "" ]; then
+								testVersionTwo="$(printf "%s" "${theXMLTwo}" | grep -o '<version>.*</version>'| cut -d '>' -f 2 | cut -d '<' -f 1)"
+							fi
+
+							if [ "${testVersionTwo}" = "" ]; then
+								testVersionTwo="${version}"
+							fi
+
+							testArtifactIdTwo="$(printf "%s" "${theXMLTwonoParent}" | grep -o '<artifactId>.*</artifactId>' | cut -d '>' -f 2 | cut -d '<' -f 1)"
+
+							mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}
+#echo "sources/structure/${groupId}/${testArtifactIdTwo}/${testVersionTwo} <<<<"
+							if [ "$jarType" = "source" ]; then
 								#source jar
-								testArtifactIdTwo=""
-								if [ "$(printf "%s" "$testArtifactIdTwo" | grep "source$")" != "" ]; then
-									testArtifactIdTwo="${testArtifactIdTwo%.source}"
-								elif [ "$(printf "%s" "$testArtifactIdTwo" | grep "sources$")" != "" ]; then
-									testArtifactIdTwo="${testArtifactIdTwo%.sources}"
-								fi
-
-								mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}
 
 								if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
 									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -c 1-1)" = "0" ]; then
@@ -512,7 +459,7 @@ echo $@
 											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
 										fi
 									elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
-										rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar"
+										rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar"		
 										if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
 											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
 										fi
@@ -529,36 +476,29 @@ echo $@
 											rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
 										fi
 									fi
-								fi
-
+								fi	
+	
 								if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
 									mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar
 								elif [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
 									mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar
 								fi
-
-								if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
-									if [ "$(find "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" -follow -maxdepth 1 -mindepth 1)" = "" ]; then
-										rmdir "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
-									fi
+	
+								if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
+									cp -a "$subjarpom" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom
 								fi
-
-								if [ ! -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
-									mv tempExtract sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources
-								fi
-
+	
 								if [ -f "$subjar" ]; then
 									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
 										rm -f "$subjar"
-									elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
+									elif  [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
 										rm -f "$subjar"
 									fi
 								fi
-
+	
+								mv tempExtract sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources
 							else
 								#bin jar
-								mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}
-
 								if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
 									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -c 1-1)" = "0" ]; then
 										rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
@@ -578,54 +518,193 @@ echo $@
 										fi
 									fi
 								fi
-
+	
 								if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
 									mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar
 								fi
-
-								if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
-									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -c 1-1)" = "0" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
-										rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
+	
+								if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
+									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" | cut -c 1-1)" = "0" ]; then
+										rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom"
 									fi
 								fi
-
-								if [ -f sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar ]; then
-									if ! [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
-										mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon
-									fi
-									if ! [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
-										mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR
-									fi
-		
-									find "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar -o sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon \;
-									find "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" -follow -maxdepth 0 -empty -exec java -jar cfr/cfr.jar sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar --outputdir sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR \;
+	
+								if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" ]; then
+									cp -a "$subjarpom" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom
 								fi
-
+	
 								if [ -f "$subjar" ]; then
-									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
+									if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ] ; then
 										rm -f "$subjar"
 									fi
 								fi
+								rm -rf tempExtract
 							fi
-
+	
 							if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
 								echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 							elif [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
 								echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 							fi
-
+							pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" "${1}" "${2}" "${3}"
+	
 						else
-							mkdir -p sources/javadoc
-							mv "$subjar" sources/javadoc
+							echo "UH OH, NO POM."
+	
+							groupIdTwo="unknown.group.id"
+							testArtifactIdTwo="$(basename "$subjar" | cut -d '_' -f 1)"
+							testVersionTwo="$(basename "$subjar" | cut -d '_' -f 2)"
+							testVersionTwo="${testVersionTwo%.jar}"
+	
+							if [ "${testVersionTwo}" = "" ]; then
+								testVersionTwo="${version}"
+							fi
+	
+							if [ "${testArtifactIdTwo}" = "" ]; then
+								testArtifactIdTwo="$(basename "$subjar")"
+							fi
+	
+							if [ "$(printf "%s" "$testArtifactIdTwo" | grep ".jar$")" != "" ]; then
+								testArtifactIdTwo="${testArtifactIdTwo%.jar}"
+							fi
+	
+							if [ "$(printf "%s" "$testArtifactIdTwo" | grep "javadoc$")" = "" ]; then
+	
+	
+								if [ "$(printf "%s" "$testArtifactIdTwo" | grep "sources$")" != "" ] || [ "$(printf "%s" "$testArtifactIdTwo" | grep "source$")" != "" ]; then
+	
+									#source jar
+									testArtifactIdTwo=""
+									if [ "$(printf "%s" "$testArtifactIdTwo" | grep "source$")" != "" ]; then
+										testArtifactIdTwo="${testArtifactIdTwo%.source}"
+									elif [ "$(printf "%s" "$testArtifactIdTwo" | grep "sources$")" != "" ]; then
+										testArtifactIdTwo="${testArtifactIdTwo%.sources}"
+									fi
+	
+									mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}
+	
+									if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
+										if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -c 1-1)" = "0" ]; then
+											rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar"
+											if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
+												rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
+											fi
+										elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
+											rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar"
+											if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
+												rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
+											fi
+										fi
+									elif [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
+										if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -c 1-1)" = "0" ]; then
+											rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar"
+											if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
+												rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
+											fi
+										elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
+											rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar"
+											if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
+												rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
+											fi
+										fi
+									fi
+	
+									if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
+										mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar
+									elif [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
+										mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar
+									fi
+	
+									if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
+										if [ "$(find "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" -follow -maxdepth 1 -mindepth 1)" = "" ]; then
+											rmdir "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources"
+										fi
+									fi
+	
+									if [ ! -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources" ]; then
+										mv tempExtract sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/extractedSources
+									fi
+	
+									if [ -f "$subjar" ]; then
+										if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-sources.jar" ]; then
+											rm -f "$subjar"
+										elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}-source.jar" ]; then
+											rm -f "$subjar"
+										fi
+									fi
+	
+								else
+									#bin jar
+									mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}
+	
+									if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
+										if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -c 1-1)" = "0" ]; then
+											rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
+											if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
+												rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon"
+											fi
+											if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
+												rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR"
+											fi
+										elif [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -lt "$(du "$subjar" | cut -f 1)" ]; then
+											rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
+											if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
+												rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon"
+											fi
+											if [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
+												rm -rf "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR"
+											fi
+										fi
+									fi
+	
+									if [ ! -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
+										mv "$subjar" sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar
+									fi
+	
+									if [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
+										if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -c 1-1)" = "0" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
+											rm -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar"
+										fi
+									fi
+	
+									if [ -f sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar ]; then
+										if ! [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" ]; then
+											mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon
+										fi
+										if ! [ -d "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" ]; then
+											mkdir -p sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR
+										fi
+			
+										find "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon" -follow -maxdepth 0 -empty -exec procyon -jar sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar -o sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledProcyon \;
+										find "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR" -follow -maxdepth 0 -empty -exec java -jar cfr/cfr.jar sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar --outputdir sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/DecompiledCFR \;
+									fi
+	
+									if [ -f "$subjar" ]; then
+										if [ "$(du "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" | cut -f 1)" -ge "$(du "$subjar" | cut -f 1)" ] && [ -f "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.jar" ]; then
+											rm -f "$subjar"
+										fi
+									fi
+								fi
+	
+								if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
+									echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
+								elif [ "$(grep "^${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}$" "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt")" = "" ]; then
+									echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
+								fi
+	
+							else
+								mkdir -p sources/javadoc
+								mv "$subjar" sources/javadoc
+							fi
+	
+							if [ -d "tempExtract" ]; then
+								rm -rf tempExtract
+							fi
 						fi
-
-						if [ -d "tempExtract" ]; then
-							rm -rf tempExtract
-						fi
-					fi
-				done
+					done
+				fi
 			fi
-
+	
 			processDeps="yes"
 
 		else
@@ -640,6 +719,7 @@ echo $@
 			done
 		fi
 
+	fi
 
 	sourceNumber=1
 
@@ -678,7 +758,7 @@ echo $@
 				cd "sources/structure/${groupId}/${artifactId}/${version}"
 				$thispwd/gradle2pom.sh "${groupId}" "${artifactId}" "${version}"
 				mv pom.xml ${artifactId}-${version}.pom
-				./processProperties.sh "${artifactId}-${version}.pom" "${artifactId}-${version}.pom"
+				$thispwd/processProperties.sh "${artifactId}-${version}.pom" "${artifactId}-${version}.pom"
 				cd "$thispwd"
 			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ]; then
 
@@ -687,7 +767,7 @@ echo $@
 				cd "sources/structure/${groupId}/${artifactId}/${version}"
 				$thispwd/kts2pom.sh "${groupId}" "${artifactId}" "${version}"
 				mv pom.xml ${artifactId}-${version}.pom
-				./processProperties.sh "${artifactId}-${version}.pom" "${artifactId}-${version}.pom"
+				$thispwd/processProperties.sh "${artifactId}-${version}.pom" "${artifactId}-${version}.pom"
 				cd "$thispwd"
 			else
 
