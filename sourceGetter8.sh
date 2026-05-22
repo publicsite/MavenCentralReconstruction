@@ -273,7 +273,7 @@ echo "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata
 
 				if [ "$(grep "^${1}/${2}/${version}$" sources/catalogue.txt )" = "" ]; then
 #					printf "FOUND DEPENDENCY: %s %s %s\n" "${1}" "${2}" "${version}"
-					printf "${1}/${2}/${version}\n" >> sources/catalogue.txt
+					printf "%s/%s/%s\n" "${1}" "${2}" "${version}" >> sources/catalogue.txt
 					./sourceGetter8.sh "${1}" "${2}" "${version}" "${4}" "${5}" "${6}" "1"
 				fi
 			fi
@@ -290,7 +290,7 @@ echo "${repository}/$(printf "%s\n" "${1}" | sed "s#\.#/#g")/${2}/maven-metadata
 
 				if [ "$(grep "^${1}/${2}/${3}$" sources/catalogue.txt )" = "" ]; then
 #					printf "FOUND DEPENDENCY: %s %s %s\n" "${1}" "${2}" "${3}"
-					printf "${1}/${2}/${3}\n" >> sources/catalogue.txt
+					printf "%s/%s/%s\n" "${1}" "${2}" "${3}" >> sources/catalogue.txt
 					./sourceGetter8.sh "${1}" "${2}" "${3}" "${4}" "${5}" "${6}" "1"
 				fi
 			fi
@@ -310,8 +310,6 @@ echo $@
 	groupId="$1"
 	artifactId="$2"
 	version="$3"
-
-	processDeps="no"
 
 		#convert build.gradle or build.gradle.kts if needs be
 		if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/pom.xml" ] && [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/${artifactId}-${version}.pom" ]; then
@@ -391,13 +389,14 @@ echo $@
 
 							pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" "${1}" "${2}" "${3}"
 
-							processDeps="yes"
-
 					fi
 				else
 				#a jar was found
 					#so read each found jar...
-					echo "$alistofsubjars" | while read subjar; do
+					oldIFS="$IFS"
+IFS='
+'
+					for subjar in $(echo "$alistofsubjars"); do
 
 						jarType=""
 						if [ "$(echo "$subjar" | grep "sources.jar$")" != "" ] || [ "$(echo "$subjar" | grep "source.jar$")" != "" ]; then
@@ -547,7 +546,8 @@ echo $@
 								echo "${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}" >> sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt
 							fi
 							pomxmldependencies "sources/structure/${groupIdTwo}/${testArtifactIdTwo}/${testVersionTwo}/${testArtifactIdTwo}-${testVersionTwo}.pom" "${1}" "${2}" "${3}"
-	
+
+
 						else
 							echo "UH OH, NO POM."
 	
@@ -702,21 +702,22 @@ echo $@
 							fi
 						fi
 					done
+					IFS="$oldIFS"
 				fi
 			fi
-	
-			processDeps="yes"
 
-		else
-			#if dependencies file does exist ...
-			if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
-				touch "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt"
-			fi 
-			cat "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" | while read adependency; do
-				if [ "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" != "unknown.group.id" ]; then
-				./sourceGetter8.sh "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" "$(printf "%s" "${adependency}" | cut -d '/' -f 2)" "$(printf "%s" "${adependency}" | cut -d '/' -f 3)" "${groupId}" "${artifactId}" "${version}"
-				fi
-			done
+
+# TODO: CHECK THIS BLOCK!
+#		else
+#			#if dependencies file does exist ...
+#			if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" ]; then
+#				touch "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt"
+#			fi 
+#			cat "sources/structure/${groupId}/${artifactId}/${version}/dependencies.txt" | while read adependency; do
+#				if [ "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" != "unknown.group.id" ]; then
+#				./sourceGetter8.sh "$(printf "%s" "${adependency}" | cut -d '/' -f 1)" "$(printf "%s" "${adependency}" | cut -d '/' -f 2)" "$(printf "%s" "${adependency}" | cut -d '/' -f 3)" "${groupId}" "${artifactId}" "${version}"
+#				fi
+#			done
 		fi
 
 	fi
@@ -740,7 +741,6 @@ echo $@
 
 	if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
 		if ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
-
 			if [ -f "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle" ]; then
 				if ! [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ] || ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle" ]; then
 					cat "sources/structure/${groupId}/${artifactId}/${version}/extractedSources/build.gradle" | sed -n '/^\/\*.*\*\//!p' | sed -n '/ \/\/.*/!p' | sed 's|/\*|\n&|g;s|*/|&\n|g' | sed '/\/\*/,/*\//d' > "sources/structure/${groupId}/${artifactId}/${version}/build.gradle"
@@ -760,6 +760,7 @@ echo $@
 				mv pom.xml ${artifactId}-${version}.pom
 				$thispwd/processProperties.sh "${artifactId}-${version}.pom" "${artifactId}-${version}.pom"
 				cd "$thispwd"
+				found="yes"
 			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ] || [ -L "sources/structure/${groupId}/${artifactId}/${version}/build.gradle.kts" ]; then
 
 				#if there is a build.gradle.kts, use kts2pom.sh to create a pom
@@ -769,6 +770,7 @@ echo $@
 				mv pom.xml ${artifactId}-${version}.pom
 				$thispwd/processProperties.sh "${artifactId}-${version}.pom" "${artifactId}-${version}.pom"
 				cd "$thispwd"
+				found="yes"
 			else
 
 				anindex=1
@@ -782,45 +784,6 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 
 							./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
 
-							#check licence information
-							if [ "$forcepomgood" = "FORCE" ]; then
-								ispomgood="GOOD"
-							else
-								ispomgood="$(./checkLicencePom.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom")"
-							fi
-
-							#if the pom doesn't contain licence information, get maven-metadata.xml and check that
-
-							if [ "$ispomgood" = "NOTSPECIFIED" ]; then
- 								if [ -f "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" ]; then
-									if [ "$(du "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" | cut -c 1-1)" = "0" ]; then
-										rm sources/structure/${groupId}/${artifactId}/maven-metadata.xml
-									fi
-								fi
-
-								if ! [ -f sources/structure/${groupId}/${artifactId}/maven-metadata.xml ]; then
-echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/maven-metadata.xml"
-								wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/maven-metadata.xml" -O sources/structure/${groupId}/${artifactId}/maven-metadata.xml 
-									sleep 1
-								fi
-
-								if [ -f "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" ]; then
-									if [ "$(du "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" | cut -c 1-1)" = "0" ]; then
-										rm sources/structure/${groupId}/${artifactId}/maven-metadata.xml
-									fi
-								fi
-
-								ispomgood="$(./checkLicencePom.sh "sources/structure/${groupId}/${artifactId}/maven-metadata.xml")"
-							fi
-
-							#if lenient is set, assume software where licence is not listed in pom is open source.
-							if [ "$forcepomgood" = "LENIENT" ] && [ "$ispomgood" = "NOTSPECIFIED" ]; then
-								ispomgood="GOOD"
-							fi
-
-							echo "${groupId}/${artifactId}/${version}	${ispomgood}" >> sources/structure/${groupId}/${artifactId}/${version}/licences.txt
-
-
 							found=yes
 							break
 						fi
@@ -828,12 +791,58 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 				done
 				IFS=$old_ifs
 			fi
+		else
+			found="yes"
+		fi
+	else
+		found="yes"
+	fi
+		if [ "$found" = "yes" ]; then
+			old_ifs=$IFS
+IFS="
+"
+			for repository in $theRepos; do
+				#check licence information
+				if [ "$forcepomgood" = "FORCE" ]; then
+					ispomgood="GOOD"
+				else
+					ispomgood="$(./checkLicencePom.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom")"
+				fi
+
+				#if the pom doesn't contain licence information, get maven-metadata.xml and check that
+
+				if [ "$ispomgood" = "NOTSPECIFIED" ]; then
+ 					if [ -f "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" ]; then
+						if [ "$(du "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" | cut -c 1-1)" = "0" ]; then
+							rm sources/structure/${groupId}/${artifactId}/maven-metadata.xml
+						fi
+					fi
+
+					if ! [ -f sources/structure/${groupId}/${artifactId}/maven-metadata.xml ]; then
+						echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/maven-metadata.xml"
+						wget "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}/maven-metadata.xml" -O sources/structure/${groupId}/${artifactId}/maven-metadata.xml 
+						sleep 1
+					fi
+
+					if [ -f "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" ]; then
+						if [ "$(du "sources/structure/${groupId}/${artifactId}/maven-metadata.xml" | cut -c 1-1)" = "0" ]; then
+							rm sources/structure/${groupId}/${artifactId}/maven-metadata.xml
+						fi
+					fi
+					ispomgood="$(./checkLicencePom.sh "sources/structure/${groupId}/${artifactId}/maven-metadata.xml")"
+				fi
+
+				#if lenient is set, assume software where licence is not listed in pom is open source.
+				if [ "$forcepomgood" = "LENIENT" ] && [ "$ispomgood" = "NOTSPECIFIED" ]; then
+					ispomgood="GOOD"
+				fi
+
+				echo "${groupId}/${artifactId}/${version}	${ispomgood}" >> sources/structure/${groupId}/${artifactId}/${version}/licences.txt
+			done
+			IFS=$old_ifs
 		elif [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom.orig" ]; then
 			./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
 		fi
-	elif [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom.orig" ]; then
-		./processProperties.sh "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom"
-	fi
 
 #	if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
 #		found=yes
@@ -866,7 +875,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 	fi
 
 	if [ "$found" = "yes" ]; then
-
+echo WOOO
 		theXML=""
 		if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
 			theXML="$(cat "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" | sed 's#\r##g' | sed 's#[ \t]##g' | tr -d "\n")"
@@ -874,27 +883,29 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 
 		theXMLnoBuild="$(printf "%s" "${theXML}" | sed "s#<build>.*</build>##g")"
 
-		scm="$(printf "%s" "$theXMLnoBuild" | grep -o '<scm>.*</scm>')"
+		scm="$(printf "%s" "${theXML}" | grep -o '<scm>.*</scm>')"
 		connection="$(printf "%s\n" "$scm" | sed -n "s:.*<connection>\(.*\)</connection>.*:\1:p" )"
 
 		aconnectionvar="$(printf "%s" "$connection" | grep -o "\${.*}")"
 
 		if [ "$aconnectionvar" != "" ]; then
 			aconnectionvar="$(printf "${aconnectionvar%\}}" | cut -c 3-)"
-			toreplaceconnection="$(printf "%s" "$theXMLnoBuild" | sed -n "s:.*<${aconnectionvar}>\(.*\)</${aconnectionvar}>.*:\1:p")"
+			toreplaceconnection="$(printf "%s" "$theXML" | sed -n "s:.*<${aconnectionvar}>\(.*\)</${aconnectionvar}>.*:\1:p")"
 			connection="$(printf "%s" "$connection" | sed "s#\${${aconnectionvar}}#${toreplaceconnection}#g")"
 		fi
 
 		tag="$(printf "%s\n" "$scm" | grep -o '<tag>.*</tag>' | cut -c 6-)"
 		tag="${tag%</tag>}"
 
+
 		printf "${indent}sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}\n" >> buildOrder.txt
 
 		if [ "$ispomgood" = "GOOD" ] && ! [ -d "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ] && ! [ -L "sources/structure/${groupId}/${artifactId}/${version}/extractedSources" ]; then
+
 			sourcesJarDownloadFailed=1
 
 			#gprintf "GETTING SOURCES %s FROM JAR\n" "$(printf "%s" "$connection" | cut -c 5-)"
-			mkdir -p sources/structure/${groupId}/${artifactId}/${version}/extractedSources
+			#mkdir -p sources/structure/${groupId}/${artifactId}/${version}/extractedSources
 IFS="
 "
 
@@ -934,6 +945,8 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 								sourcesJarDownloadFailed=0
 							fi 
 						fi
+					else
+						rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar"
 					fi
 				fi
 			elif [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar" ]; then
@@ -948,6 +961,8 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 								sourcesJarDownloadFailed=0
 							fi 
 						fi
+					else
+						rm "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-source.jar"
 					fi
 				fi
 			fi
@@ -955,7 +970,6 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 			if [ ! -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar" ] && [ ! -L "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}-sources.jar" ]; then
 
 				if [ "$sourcesJarDownloadFailed" = 1 ]; then
-
 
 					if [ "$(printf "%s\n" "$connection" | cut -c 1-8)" = "scm:git:" ]; then
 						if [ "$(printf "${connection}" | cut -c 1-12)" = "scm:git:git@" ]; then
@@ -971,7 +985,7 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 
 							if ! [ -d "extractedSources" ]; then
 								mkdir -p "extractedSources"
-echo "${scmurl}"
+
 								git clone "${scmurl}" "extractedSources"
 								if [ "$?" != 0 ]; then
 									gitfailed=1
@@ -980,13 +994,16 @@ echo "${scmurl}"
 						else 
 
 							scmurl="$(printf "%s" "$connection" | cut -c 9- | sed "s#git://github.com#https://github.com#g")"
-
+echo "${scmurl}"
 							scmdir="$(printf "%s\n" "${scmurl}" | sed "s#//##g")"
-	
+
 							if ! [ -d "extractedSources" ]; then
 								mkdir -p "extractedSources"
 echo "${scmurl} -b ${tag}"
-								git clone -b "${tag}" "${scmurl}" "extractedSources"
+								git clone "${scmurl}" "extractedSources"
+								cd extractedSources
+								git checkout ${tag}
+								cd ..
 								if [ "$?" != 0 ]; then
 									gitfailed=1
 								fi
@@ -1036,7 +1053,10 @@ echo "${scmurl} -b HEAD"
 							if ! [ -d "extractedSources" ]; then
 								mkdir -p "extractedSources"
 echo "${scmurl} -b HEAD"
-								git clone -b "${tag}" "${scmurl}" "extractedSources"
+								git clone "${scmurl}" "extractedSources"
+								cd extractedSources
+								git checkout "${tag}"
+								cd ..
 								if [ "$?" != 0 ]; then
 									gitfailed=1
 								fi
@@ -1208,7 +1228,8 @@ echo "${repository}/$(printf "%s\n" "${groupId}" | sed "s#\.#/#g")/${artifactId}
 			fi
 		fi
 
-		if [ "$processDeps" = "yes" ]; then
+		if [ -f "sources/structure/${groupId}/${artifactId}/${version}/${artifactId}-${version}.pom" ]; then
+
 			#if dependencies file does not exist ...
 
 			#process dependencies
